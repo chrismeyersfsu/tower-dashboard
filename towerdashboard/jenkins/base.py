@@ -165,6 +165,7 @@ def sign_off_jobs():
     else:
         payload = flask.request.json
         required_keys = ['tower', 'component', 'deploy', 'platform', 'tls', 'fips', 'bundle', 'ansible', 'url', 'status']
+
         check_payload(payload, required_keys)
         tower_query = form_tower_query(payload['tower'])
         condition = 'tower_id = (%s) AND component = "%s" AND deploy = "%s" AND platform = "%s" AND' \
