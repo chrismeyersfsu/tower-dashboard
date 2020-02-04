@@ -1,0 +1,14 @@
+table thead tr td{
+  background-color : gray;
+  min-width : 100px;
+  position: relative;
+}
+
+.filter{
+  position:absolute;
+  border: solid 1px;
+  top : 20px;
+  background-color : white;
+  right:0;
+  display:none;
+}
