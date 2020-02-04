@@ -68,3 +68,19 @@ CREATE TABLE sign_off_jobs (
   ansible TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE integration_tests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  test_name TEXT NOT NULL,
+  tower_id INTEGER NOT NULL,
+  deploy TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  bundle TEXT NOT NULL,
+  tls TEXT NOT NULL,
+  fips TEXT NOT NULL,
+  status TEXT,
+  url TEXT,
+  ansible TEXT NOT NULL,
+  created_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  failing_since DATE
+);

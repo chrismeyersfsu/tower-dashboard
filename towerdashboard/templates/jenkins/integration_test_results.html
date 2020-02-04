@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <script data-require="jquery@2.0.3" data-semver="2.0.3" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+<br/>
+<ul class="nav nav-tabs">
+{% for version in versions %}
+  <li class="nav-item">
+	  <a class="nav-link {% if loop.index == 1 %}active{% endif %}" data-toggle="tab" href="#release{{ version.id }}">Release {{ version.next_release }} {% if loop.index == 1 %}(devel){% endif %}</a>
+  </li>
+{% endfor %}
+</ul>
+
+
+<div class="tab-content">
+{% for version in versions %}
+  <div class="tab-pane {% if loop.index == 1 %}active{% endif %}" id="release{{ version.id }}">
+
+    <br/><br/>
+    <h4>Integration Results</h4>
+    <hr/>
+
+    <img src="{{ url_for('static', filename='green.png') }}"></img><img src="{{ url_for('static', filename='red.png') }}"></img><img src="{{ url_for('static', filename='yellow.png') }}"></img> Fresh results (Less than 2 days)
+    <img style="opacity: 0.5;" src="{{ url_for('static', filename='green.png') }}"></img><img style="opacity: 0.5;" src="{{ url_for('static', filename='red.png') }}"></img><img style="opacity: 0.5;" src="{{ url_for('static', filename='yellow.png') }}"></img> Non fresh results (older than 2 days)
+    <img src="{{ url_for('static', filename='grey.png') }}"></img> Never run yet
+
+
+    <table id="table1" class="table table-bordered grid">
+        <thead align="center">
+          <tr>
+            <td index=0>Test
+              <div class="filter"></div>
+            </td>
+            <td index=1>Deploy
+              <div class="filter"></div>
+            </td>
+            <td index=2>OS
+              <div class="filter"></div>
+            </td>
+            <td index=3>Bundle
+              <div class="filter"></div>
+            </td>
+            <td index=4>TLS
+              <div class="filter"></div>
+            </td>
+             <td index=5>FIPS
+              <div class="filter"></div>
+            </td>
+            <td index=6>Ansible
+              <div class="filter"></div>
+            </td>
+            <td index=7>Job URL
+            </td>
+            <td index=8>Failed On
+            </td>
+            <td index=8>Failing since
+            </td>
+          </tr>
+        </thead>
+        <tbody>
+                {% for test in integration_test_results %}
+                  {% if test.tower_id == version.id %}
+                    <tr>
+                      <td align="left" id={{ test.test_name }} >{{ test.test_name }}</td>
+                      <td align="left" id={{ test.deploy }}>{{ test.deploy }}</td>
+                      <td align="left" id={{ test.platform }}>{{ test.platform }}</td>
+                      <td align="left" id={{ test.bundle }}>{{ test.bundle }}</td>
+                      <td align="left" id={{ test.tls }}>{{ test.tls }}</td>
+                      <td align="left" id={{ test.fips }}>{{ test.fips }}</td>
+                      <td align="left" id={{ test.ansible }}>{{ test.ansible }}</td>
+
+                      {% if test.status == 'SUCCESS' %}
+                        {% if test.freshness < 2 %}
+                        <td align="center"><a href="{{ test.url }}"><img src="{{ url_for('static', filename='green.png') }}"></img></a></td>
+                        {% else %}
+                        <td align="center"><a href="{{ test.url }}"><img style="opacity: 0.5" src="{{ url_for('static', filename='green.png') }}"></img></a></td>
+                        {% endif %}
+                      {% elif test.status == 'FAILURE' %}
+                        {% if test.freshness < 2 %}
+                        <td align="center"><a href="{{ test.url }}"><img src="{{ url_for('static', filename='red.png') }}"></img></a></td>
+                        {% else %}
+                        <td align="center"><a href="{{ test.url }}"><img style="opacity: 0.5" src="{{ url_for('static', filename='red.png') }}"></img></a></td>
+                        {% endif %}
+                      {% elif test.status == 'UNSTABLE' %}
+                        {% if test.freshness < 2 %}
+                        <td align="center"><a href="{{ test.url }}"><img src="{{ url_for('static', filename='yellow.png') }}"></img></a></td>
+                        {% else %}
+                        <td align="center"><a href="{{ test.url }}"><img style="opacity: 0.5" src="{{ url_for('static', filename='yellow.png') }}"></img></a></td>
+                        {% endif %}
+                      {% else %}
+                        <td align="center">
+                        {% if test.url %}
+                            <a href="{{ test.url }}"><img src="{{ url_for('static', filename='grey.png') }}"></img></a>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='grey.png') }}"></img>
+                        {% endif %}
+                        </td>
+                      {% endif %}
+                      <td align="left" id={{ test.created_on }}>{{ test.created_at }}</td>
+                      <td align="left" id={{ test.failing_since }}>{{ test.failing_since }}</td>
+                    </tr>
+                  {% endif %}
+                {% endfor %}
+            </tbody>
+    </table>
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}
+
