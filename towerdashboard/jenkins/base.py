@@ -164,30 +164,79 @@ def sign_off_jobs():
         )
     else:
         payload = flask.request.json
-        required_keys = ['tower', 'component', 'deploy', 'platform', 'tls', 'fips', 'bundle', 'ansible']
+        required_keys = ['tower', 'component', 'deploy', 'platform', 'tls', 'fips', 'bundle', 'ansible', 'url', 'status']
         check_payload(payload, required_keys)
         tower_query = form_tower_query(payload['tower'])
-        job_query = 'SELECT id FROM sign_off_jobs WHERE tower_id = (%s) AND component = "%s" AND deploy = "%s" AND platform = "%s" AND tls = "%s" AND fips = "%s" AND bundle = "%s" AND ansible = "%s"' % (tower_query, payload['component'], payload['deploy'], payload['platform'], payload['tls'], payload['fips'], payload['bundle'], payload['ansible'])
-        return_info_query = 'SELECT display_name, created_at FROM sign_off_jobs WHERE id = (%s)' % (job_query)
+        condition = 'tower_id = (%s) AND component = "%s" AND deploy = "%s" AND platform = "%s" AND' \
+                    ' tls = "%s" AND fips = "%s" AND bundle = "%s" AND ansible = "%s"' \
+                    % (tower_query, payload['component'], payload['deploy'], payload['platform'],
+                       payload['tls'], payload['fips'], payload['bundle'], payload['ansible'])
+        job_query = 'SELECT id FROM sign_off_jobs WHERE %s' % (condition)
 
         db_access = db.get_db()
-
-        _update_query = 'UPDATE sign_off_jobs SET status = "%s", url = "%s", created_at = "%s" WHERE id = (%s)' % (payload['status'], payload['url'], datetime.now(), job_query)
-        db_access.execute(_update_query)
-        res = db_access.execute(return_info_query).fetchall()
-        updated_job = db.format_fetchall(res)
+        existing = db_access.execute(job_query).fetchall()
+        existing = db.format_fetchall(existing)
+        if existing:
+            _update_query = 'UPDATE sign_off_jobs SET status = "%s", url = "%s", created_at = "%s" WHERE id = (%s)'\
+                            % (payload['status'], payload['url'], datetime.now(), job_query)
+            db_access.execute(_update_query)
+            return_info_query = 'SELECT display_name, created_at FROM sign_off_jobs WHERE id = (%s)' % (job_query)
+            res = db_access.execute(return_info_query).fetchall()
+            updated_job = db.format_fetchall(res)
+        else:
+            job = "component_{}_platform_{}_deploy_{}_tls_{}_fips_{}_bundle_{}_ansible_{}".format(
+                payload["component"],
+                payload["platform"],
+                payload["deploy"],
+                payload["tls"],
+                payload["fips"],
+                payload["bundle"],
+                payload["ansible"],
+            )
+            tls_statement = "(TLS Enabled)" if payload["tls"] == "yes" else ""
+            fips_statement = "(FIPS Enabled)" if payload["fips"] == "yes" else ""
+            bundle_statement = (
+                "(Bundle installer)" if payload["bundle"] == "yes" else ""
+            )
+            display_name = "{} {} {} {} {} {} w/ ansible {}".format(
+                payload["platform"],
+                payload["deploy"],
+                payload["component"].replace("_", " "),
+                tls_statement,
+                fips_statement,
+                bundle_statement,
+                payload["ansible"],
+            )
+            display_name = display_name.title()
+            insert_query = (
+                "INSERT INTO sign_off_jobs (tower_id, job, display_name, component, platform, deploy, "
+                'tls, fips, bundle, ansible) VALUES ((%s), "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s");\n'
+                % (
+                    tower_query,
+                    job,
+                    display_name,
+                    payload["component"],
+                    payload["platform"],
+                    payload["deploy"],
+                    payload["tls"],
+                    payload["fips"],
+                    payload["bundle"],
+                    payload["ansible"],
+                )
+            )
+            db_access.execute(insert_query)
         db_access.commit()
 
-        if updated_job:
+        if existing:
             return flask.Response(
-            json.dumps(updated_job),
+            json.dumps({'OK': 'Updated'}),
             status=200,
             content_type='application/json'
             )
         else:
             return flask.Response(
-            json.dumps({'Error': 'No job found to update'}),
-            status=400,
+            json.dumps({'OK': 'Inserted'}),
+            status=200,
             content_type='application/json'
             )
 

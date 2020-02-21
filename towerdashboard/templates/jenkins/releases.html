@@ -260,12 +260,14 @@
     <div class="card-header" id="headingSignOff">
       <h5 class="mb-0">
         <h4>All Sign Off Jobs for Release</h4>
-        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSignOff" aria-expanded="true" aria-controls="collapseSignOff">
-			  click to hide or expand
-        </button>
+        
       </h5>
     </div>
 
+    {% if sign_off_jobs %}
+    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSignOff" aria-expanded="true" aria-controls="collapseSignOff">
+      click to hide or expand
+    </button>
     <div id="collapseSignOff" class="collapse show" aria-labelledby="headingSignOff" data-parent="#accordionSignOff">
       <div class="card-body">
         <table class="table table-bordered">
@@ -312,6 +314,9 @@
         </table>
       </div>
     </div>
+    {% else %}
+    <h5>There are no sign off jobs to display.</h5>
+    {% endif %}    
   </div>
 </div>
 
