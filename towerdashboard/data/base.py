@@ -173,31 +173,6 @@ TOWER_ANSIBLE = [
     {'tower': 'Release 3.3', 'ansible': 'stable-2.7'},
 ]
 
-SIGN_OFF_PLATFORMS = [
-    'rhel-7.7-x86_64',
-    'rhel-8.1-x86_64',
-    'OpenShift'
-]
-
-SIGN_OFF_DEPLOYMENTS = [
-    {'deploy': deploy, 'tls': tls, 'fips': fips, 'bundle': bundle}
-    for deploy, tls, fips, bundle in itertools.product(
-        ('standalone', 'cluster'),
-        ('yes', 'no'),
-        ('yes', 'no'),
-        ('yes', 'no'),
-    )
-]
-
-SIGN_OFF_COMPONENTS = [
-    'install',
-    'major_upgrade',
-    'minor_upgrade',
-    'integration',
-    'backup_restore',
-    'external_database'
-]
-
 RESULTS = [
 #     {'release': 'release_3.3.2', 'os': 'rhel-7.6-x86_64', 'ansible': 'stable-2.7', 'status': 'SUCCESS', 'job_id': 12},
 #     {'release': 'release_3.3.2', 'os': 'rhel-7.5-x86_64', 'ansible': 'stable-2.6', 'status': 'SUCCESS', 'job_id': 13},
