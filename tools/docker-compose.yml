@@ -1,0 +1,20 @@
+---
+version: "3"
+services:
+  dashboard:
+    user: ${CURRENT_UID}
+    image: ansible/dashboard:latest
+    container_name: dashboard
+    hostname: dashboard
+    environment:
+      CURRENT_UID:
+      FLASK_ENV: development
+      FLASK_APP: /dashboard_devel/towerdashboard/app.py
+      TOWERDASHBOARD_SETTINGS: /dashboard_devel/settings.py
+      PYTHONUNBUFFERED: 0
+    ports:
+      - "5000:5000"
+    working_dir: "/dashboard_devel"
+    volumes:
+      - "../:/dashboard_devel"
+    command: ["/venv/bin/flask", "run", "--host=0.0.0.0"]

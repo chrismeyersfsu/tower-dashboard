@@ -118,49 +118,14 @@ To be able to update a production environment, few steps are required:
 
 To be able to set up a dev environment, few steps are required.
 
-  1. Ensure `pip` and `virtualenv` are installed
+```
+make build
+cp settings.sample.py settings.py
+make run
 
-  ```bash
-  #> yum -y install python-pip python-virtualenvironment
-  ```
-
-  2. Create yourself a virtual environment
-
-  ``` bash
-  #> virtualenv /path/to/towerdashboard/venv
-  #> source /path/to/towerdashboard/venv/bin/activate
-  ```
-
-  3. Clone the repository
-
-  ``` bash
-  #> git clone https://github.com/ansible/tower-dashboard
-  ```
-
-  4. Install the dependencies
-
-  ``` bash
-  #> cd tower-dashboard
-  #> pip install -r requirements.txt
-  ```
-
-  5. Copy and edit the settings.sample.py file
-
-  ``` bash
-  #> cp settings.sample.py /tmp/settings.py
-  #> vim /tmp/settings.py
-  ```
-
-  5. Rock'n'Roll
-
-  ``` bash
-  #> FLASK_APP=/path/to/towerdashboard/app.py FLASK_DEBUG=1 TOWERDASHBOARD_SETTINGS=/tmp/settings.py flask run
-  ```
-
-  6. Initialize the DB
-  ```
-  #> curl http://127.0.0.1:5000/init-db
-  ```
+# Initialize the DB
+curl http://127.0.0.1:5000/init-db
+```
 
 tower-dashboard should be running on your local loop on port 5000 (`http://127.0.0.1:5000`)
 
