@@ -5,7 +5,6 @@ services:
     user: ${CURRENT_UID}
     image: ansible/dashboard:latest
     container_name: dashboard
-    hostname: dashboard
     environment:
       CURRENT_UID:
       FLASK_APP: /dashboard_devel/towerdashboard/app.py
@@ -17,3 +16,40 @@ services:
     volumes:
       - "../:/dashboard_devel"
     command: ["/venv/bin/flask", "run", "--host=0.0.0.0"]
+    links:
+      - redis
+  dashboard_worker:
+    user: ${CURRENT_UID}
+    image: ansible/dashboard:latest
+    container_name: dashboard_worker
+    environment:
+      CURRENT_UID:
+      TOWERDASHBOARD_SETTINGS: /dashboard_devel/settings.py
+      PYTHONUNBUFFERED: 0
+    working_dir: "/dashboard_devel"
+    volumes:
+      - "../:/dashboard_devel"
+    command: ["/venv/bin/rq", "worker", "--url", "redis://redis:6379/"]
+    links:
+      - redis
+  dashboard_scheduler:
+    user: ${CURRENT_UID}
+    image: ansible/dashboard:latest
+    container_name: dashboard_scheduler
+    environment:
+      CURRENT_UID:
+      TOWERDASHBOARD_SETTINGS: /dashboard_devel/settings.py
+      PYTHONUNBUFFERED: 0
+    working_dir: "/dashboard_devel"
+    volumes:
+      - "../:/dashboard_devel"
+    command: ["/venv/bin/rqscheduler", "--host", "redis", "-i", "5"]
+    links:
+      - redis
+
+
+  redis:
+    image: redis:latest
+    container_name: dashboard_redis
+    ports:
+      - "6379:6379"

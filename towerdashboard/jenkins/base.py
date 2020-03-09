@@ -245,8 +245,8 @@ def sign_off_jobs():
 
 
 def serialize_issues(project):
-    total_count = github.get_issues_information(project)['total_count']
-    result = github.get_issues_information(project, 'label:state:needs_test')
+    total_count = current_app.github.get_issues_information(project)['total_count']
+    result = current_app.github.get_issues_information(project, 'label:state:needs_test')
 
     needs_test_issues = []
     for issue in result['items']:
@@ -343,7 +343,7 @@ def integration_test_results():
     versions_query = 'SELECT * FROM tower_versions'
     versions = db_access.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
-    branches = github.get_branches()
+    branches = current_app.github.get_branches()
 
     for version in versions:
         if 'devel' not in version['version'].lower():
@@ -415,7 +415,7 @@ def releases():
     failed_jobs = set_freshness(failed_jobs, 'created_at', discard_old=True)
     misc_results = set_freshness(misc_results, 'res_created_at')
 
-    branches = github.get_branches()
+    branches = current_app.github.get_branches()
 
     for version in versions:
         if 'devel' not in version['version'].lower():
@@ -429,8 +429,8 @@ def releases():
             version['next_release'] = current_app.config.get('DEVEL_VERSION_NAME', 'undef')
             milestone_name = 'release_{}'.format(version['next_release'])
 
-        version['next_release_test_plan'] = github.get_test_plan_url(version['next_release'])
-        project_number = github.get_project_by_name('Ansible Tower {}'.format(version['next_release']))['number']
+        version['next_release_test_plan'] = current_app.github.get_test_plan_url(version['next_release'])
+        project_number = current_app.github.get_project_by_name('Ansible Tower {}'.format(version['next_release']))['number']
         version['project'] = 'https://github.com/orgs/ansible/projects/{}'.format(project_number)
         version['issues'] = serialize_issues('ansible/{}'.format(project_number))
 

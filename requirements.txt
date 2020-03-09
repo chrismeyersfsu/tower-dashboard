@@ -1,2 +1,6 @@
 flask
 requests
+rq
+rq-scheduler
+Flask-Caching
+redis
