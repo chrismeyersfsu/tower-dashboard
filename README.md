@@ -19,20 +19,17 @@ The dashboard sources information from github repos (i.e. branches, issues, proj
 ```
 make build-prod
 TOWERDASHBOARD_SETTINGS=/path_to_prod_settings.py make run-prod
-curl http://tower-qe-dashboard.ansible.eng.rdu2.redhat.com/init-db
 ```
 
 ### Development
 
-To be able to set up a dev environment, few steps are required.
+The development container derives from the production container. Therefore, the production container must be built first.
 
 ```
+make build-prod
 make build
 cp settings.sample.py settings.py
 make run
-
-# Initialize the DB
-curl http://127.0.0.1:5000/init-db
 ```
 
 tower-dashboard should be running on your local loop on port 5000 (`http://127.0.0.1:5000`)

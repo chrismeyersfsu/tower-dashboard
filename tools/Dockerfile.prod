@@ -2,7 +2,8 @@ FROM centos:8
 
 RUN dnf -y install python3 \
   gcc \
-  python3-devel
+  python3-devel \
+  make
 
 RUN pip3 install "virtualenv<20"
 
@@ -14,5 +15,3 @@ RUN /venv/bin/pip3 install -r /tmp/requirements/requirements.txt
 
 COPY ./dist/towerdashboard-*.tar.gz /tmp/
 RUN /venv/bin/pip3 install /tmp/towerdashboard-*.tar.gz
-
-CMD ["bash"]

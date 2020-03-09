@@ -1,0 +1,7 @@
+Metadata-Version: 1.1
+Name: towerdashboard
+Version: 0.0.1
+Summary: Tower QE Dashboard
+Home-page: https://github.com/ansible/tower-dashboard
+Author: Tower QE Team
+Author-email: ansible-tower-qe@redhat.com

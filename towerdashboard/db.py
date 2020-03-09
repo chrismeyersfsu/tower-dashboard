@@ -20,34 +20,37 @@ import os
 import sqlite3
 import tempfile
 
-from flask import current_app, g
+from flask import g
 from towerdashboard.data import base
 
 
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(
-            current_app.config.get('SQLITE_PATH', '/tmp/towerdashboard.sqlite'),
-            detect_types=sqlite3.PARSE_DECLTYPES
-        )
-        g.db.row_factory = sqlite3.Row
-
-    return g.db
+def get_db(app):
+    return app.db
 
 
-def close_db(e=None):
-    db = g.pop('db', None)
-
-    if db is not None:
-        db.close()
+def close_db(app):
+    if getattr(app, 'db', None):
+        app.db.close()
 
 
-def init_db():
-    if os.path.exists(current_app.config.get('SQLITE_PATH', '/tmp/towerdashboard.sqlite')):
-        return False
+def is_db_inited(app):
+    db = get_db(app)
+    '''
+    If table exists in database, presume database to be inited
+    '''
+    table_query = 'SELECT count(*) FROM sqlite_master WHERE type="table" AND name="os_versions"'
+    table_exists = db.execute(table_query).fetchone()[0]
+    if table_exists:
+        return True
 
-    db = get_db()
-    with current_app.open_resource('schema.sql') as f:
+
+def init_db(app):
+    db = get_db(app)
+
+    if is_db_inited(app):
+        return True
+
+    with app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
     with tempfile.NamedTemporaryFile(mode='w+') as _tempfile:
@@ -67,7 +70,7 @@ def init_db():
             )
 
         _tempfile.flush()
-        with current_app.open_resource(_tempfile.name) as f:
+        with app.open_resource(_tempfile.name) as f:
             db.executescript(f.read().decode('utf8'))
 
     with tempfile.NamedTemporaryFile(mode='w+') as _tempfile:
@@ -94,13 +97,18 @@ def init_db():
         #     )
 
         _tempfile.flush()
-        with current_app.open_resource(_tempfile.name) as f:
+        with app.open_resource(_tempfile.name) as f:
             db.executescript(f.read().decode('utf8'))
 
     return True
 
 
 def init_app(app):
+    app.db = sqlite3.connect(
+        app.config.get('SQLITE_PATH', '/tmp/towerdashboard.sqlite'),
+        detect_types=sqlite3.PARSE_DECLTYPES
+    )
+    app.db.row_factory = sqlite3.Row
     app.teardown_appcontext(close_db)
 
 

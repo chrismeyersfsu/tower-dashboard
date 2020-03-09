@@ -18,13 +18,32 @@
 import flask
 import json
 import os
+import logging
+from datetime import datetime
 
-from towerdashboard import db
+from flask import current_app
+
+import redis
+from redis import Redis
+
+from flask_caching import Cache
+
 from towerdashboard.jenkins import jenkins
+from towerdashboard.commands import dashboard as dashboard_commands
+from towerdashboard import (
+    db,
+    jobs,
+    github,
+)
+
+
+root = flask.Blueprint('root', __name__)
 
 
 def create_app():
+
     app = flask.Flask(__name__)
+    app.logger.setLevel(logging.INFO)
     if os.environ.get('TOWERDASHBOARD_SETTINGS'):
         app.config.from_envvar('TOWERDASHBOARD_SETTINGS')
     else:
@@ -34,16 +53,30 @@ def create_app():
     if not app.config.get('TOWERQA_REPO'):
         raise RuntimeError('TOWERQA_REPO setting must be specified')
 
+    app.register_blueprint(root, cli_group=None)
     app.register_blueprint(jenkins)
     db.init_app(app)
 
+    cache = Cache(config={
+        'CACHE_TYPE': 'redis',
+        'CACHE_REDIS_URL': 'redis://redis:6379/6',
+        'CACHE_KEY_PREFIX': 'towerdashboard',
+    })
+
+    cache.init_app(app)
+    app.cache = cache
+    app.github = github.GithubQuery(app.logger,
+                                    cache,
+                                    github_token=app.config.get('GITHUB_TOKEN'),
+                                    towerqa_repo=app.config.get('TOWERQA_REPO'))
+
+    # Command line commands
+    # FLASK_APP="app.py:create_app()" flask dashboard <command>
+    app.cli.add_command(dashboard_commands.cmds)
     return app
 
 
-app = create_app()
-
-
-@app.route('/', strict_slashes=False)
+@root.route('/', strict_slashes=False)
 def index():
     return flask.Response(
         json.dumps({'_status': 'OK', 'message': 'Tower Dasbhoard: OK'}),
@@ -52,15 +85,23 @@ def index():
     )
 
 
-@app.route('/init-db', strict_slashes=False)
-def init_db():
-    if db.init_db():
-        msg = 'Database initialized'
-    else:
-        msg = 'Database alaready initialized'
+@root.route('/api/health', strict_slashes=False)
+def health():
+    status = {
+        'database': {
+            'online': True,
+            'inited': db.is_db_inited(current_app),
+        },
+        'redis': {
+            'online': False,
+        }
+    }
+    try:
+        r = Redis('redis', socket_connect_timeout=1)
+        r.ping()
+        status['redis']['online'] = True
+    except redis.exceptions.ConnectionError:
+        status['redis']['online'] = False
 
-    return flask.Response(
-        json.dumps({'_status': 'OK', 'message': msg}),
-        status=200,
-        content_type='application/json'
-    )
+    return flask.Response(json.dumps(status))
+

@@ -1,4 +1,4 @@
-version: '2'
+version: '2.4'
 services:
   web:
     extends:
@@ -6,32 +6,48 @@ services:
       service: web
     ports:
       - "5000:80"
+  dashboard_init:
+    user: ${CURRENT_UUID}
+    extends:
+      file: docker-compose.prod.yml
+      service: dashboard_init
+    image: ansible/dashboard-dev:latest
+    environment:
+      PYTHONUNBUFFERED: 0
+    volumes:
+      - "../:/dashboard_devel"
   dashboard:
+    user: ${CURRENT_UUID}
     extends:
       file: docker-compose.prod.yml
       service: dashboard
     image: ansible/dashboard-dev:latest
     environment:
-      TOWERDASHBOARD_SETTINGS: "/dashboard_devel/settings.py"
+      PYTHONUNBUFFERED: 0
     volumes:
       - "../:/dashboard_devel"
-    command:
-      - /venv/bin/uwsgi
-      - -s
-      - /var/run/uwsgi/uwsgi.sock
-      - --module=towerdashboard.app
-      - --callable=app
-      - --vacuum
-      - --processes=5
-      - --harakiri=120
-      - --no-orphans
-      - --master
-      - --max-requests=1000
-      - --lazy-apps
-      - -b
-      - "32768"
-      - --chmod-socket=666
-      - --home=/venv/
-      - --chdir=/dashboard_devel/
-      - --py-autoreload=1
-
+    command: make -C /dashboard_devel/ uwsgi-dev
+  dashboard_worker:
+    user: ${CURRENT_UUID}
+    extends:
+      file: docker-compose.prod.yml
+      service: dashboard_worker
+    image: ansible/dashboard-dev:latest
+    volumes:
+      - "../:/dashboard_devel"
+    links:
+      - redis
+  dashboard_scheduler:
+    user: ${CURRENT_UUID}
+    extends:
+      file: docker-compose.prod.yml
+      service: dashboard_scheduler
+    image: ansible/dashboard-dev:latest
+    volumes:
+      - "../:/dashboard_devel"
+    links:
+      - redis
+  redis:
+    extends:
+      file: docker-compose.prod.yml
+      service: redis

@@ -9,5 +9,7 @@ RUN cat /tmp/requirements/* > /tmp/requirements/requirements_all.txt
 
 RUN rm -rf /venv && virtualenv /venv
 RUN /venv/bin/pip3 install -r /tmp/requirements/requirements_all.txt
+ADD ./tools/towerdashboard.egg-link /venv/lib/python3.6/site-packages/
+ADD ./tools/easy-install.pth /venv/lib/python3.6/site-packages/
 
 CMD ["bash"]

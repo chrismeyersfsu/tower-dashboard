@@ -62,7 +62,7 @@ def check_payload(payload, required_keys):
 
 @jenkins.route('/ansible-versions', strict_slashes=False)
 def ansible_versions():
-    db_access = db.get_db()
+    db_access = db.get_db(current_app)
 
     versions = db_access.execute('SELECT * FROM ansible_versions').fetchall()
     versions = db.format_fetchall(versions)
@@ -76,7 +76,7 @@ def ansible_versions():
 
 @jenkins.route('/os-versions', strict_slashes=False)
 def os_versions():
-    db_access = db.get_db()
+    db_access = db.get_db(current_app)
 
     versions = db_access.execute('SELECT * FROM os_versions').fetchall()
     versions = db.format_fetchall(versions)
@@ -90,7 +90,7 @@ def os_versions():
 
 @jenkins.route('/tower-versions', strict_slashes=False)
 def tower_versions():
-    db_access = db.get_db()
+    db_access = db.get_db(current_app)
 
     versions = db_access.execute('SELECT * FROM tower_versions').fetchall()
     versions = db.format_fetchall(versions)
@@ -114,7 +114,7 @@ def results():
         ansible_query = 'SELECT id FROM ansible_versions WHERE version = "%s"' % payload['ansible']
     os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % payload['os']
 
-    db_access = db.get_db()
+    db_access = db.get_db(current_app)
 
     if 'ansible' in payload:
         _del_query = 'DELETE FROM results WHERE tower_id = (%s) AND ansible_id = (%s) AND os_id = (%s)' % (tower_query, ansible_query, os_query)
@@ -153,7 +153,7 @@ def sign_off_jobs():
         else:
             job_query = 'SELECT * FROM sign_off_jobs'
 
-        db_access = db.get_db()
+        db_access = db.get_db(current_app)
         res = db_access.execute(job_query).fetchall()
         sign_off_jobs = db.format_fetchall(res)
 
@@ -174,7 +174,7 @@ def sign_off_jobs():
                        payload['tls'], payload['fips'], payload['bundle'], payload['ansible'])
         job_query = 'SELECT id FROM sign_off_jobs WHERE %s' % (condition)
 
-        db_access = db.get_db()
+        db_access = db.get_db(current_app)
         existing = db_access.execute(job_query).fetchall()
         existing = db.format_fetchall(existing)
         if existing:
@@ -245,8 +245,8 @@ def sign_off_jobs():
 
 
 def serialize_issues(project):
-    total_count = github.get_issues_information(project)['total_count']
-    result = github.get_issues_information(project, 'label:state:needs_test')
+    total_count = current_app.github.get_issues_information(project)['total_count']
+    result = current_app.github.get_issues_information(project, 'label:state:needs_test')
 
     needs_test_issues = []
     for issue in result['items']:
@@ -289,7 +289,7 @@ def integration_tests():
         else:
             job_query = 'SELECT * FROM integration_tests'
 
-        db_access = db.get_db()
+        db_access = db.get_db(current_app)
         res = db_access.execute(job_query).fetchall()
         integration_tests = db.format_fetchall(res)
 
@@ -310,7 +310,7 @@ def integration_tests():
                         (test, tower_query, payload['deploy'], payload['platform'], payload['tls'], payload['fips'],
                          payload['bundle'], payload['ansible'])
             job_query = 'SELECT * FROM integration_tests WHERE %s' % (condition)
-            db_access = db.get_db()
+            db_access = db.get_db(current_app)
             existing = db_access.execute(job_query).fetchall()
             existing = db.format_fetchall(existing)
             if existing:
@@ -339,11 +339,11 @@ def integration_tests():
 
 @jenkins.route('/integration_test_results', strict_slashes=False)
 def integration_test_results():
-    db_access = db.get_db()
+    db_access = db.get_db(current_app)
     versions_query = 'SELECT * FROM tower_versions'
     versions = db_access.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
-    branches = github.get_branches()
+    branches = current_app.github.get_branches()
 
     for version in versions:
         if 'devel' not in version['version'].lower():
@@ -383,7 +383,7 @@ def integration_test_results():
 
 @jenkins.route('/releases', strict_slashes=False)
 def releases():
-    db_access = db.get_db()
+    db_access = db.get_db(current_app)
 
     versions_query = 'SELECT * FROM tower_versions'
     versions = db_access.execute(versions_query).fetchall()
@@ -415,7 +415,7 @@ def releases():
     failed_jobs = set_freshness(failed_jobs, 'created_at', discard_old=True)
     misc_results = set_freshness(misc_results, 'res_created_at')
 
-    branches = github.get_branches()
+    branches = current_app.github.get_branches()
 
     for version in versions:
         if 'devel' not in version['version'].lower():
@@ -429,8 +429,8 @@ def releases():
             version['next_release'] = current_app.config.get('DEVEL_VERSION_NAME', 'undef')
             milestone_name = 'release_{}'.format(version['next_release'])
 
-        version['next_release_test_plan'] = github.get_test_plan_url(version['next_release'])
-        project_number = github.get_project_by_name('Ansible Tower {}'.format(version['next_release']))['number']
+        version['next_release_test_plan'] = current_app.github.get_test_plan_url(version['next_release'])
+        project_number = current_app.github.get_project_by_name('Ansible Tower {}'.format(version['next_release']))['number']
         version['project'] = 'https://github.com/orgs/ansible/projects/{}'.format(project_number)
         version['issues'] = serialize_issues('ansible/{}'.format(project_number))
 
