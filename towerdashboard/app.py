@@ -18,12 +18,34 @@
 import flask
 import json
 import os
+from datetime import datetime
+
+from flask_caching import Cache
+
+from redis import Redis
+from rq_scheduler import Scheduler
 
 from towerdashboard import db
 from towerdashboard.jenkins import jenkins
+from towerdashboard import jobs
+from towerdashboard import github
 
 
-def create_app():
+root = flask.Blueprint('root', __name__)
+
+
+def start_background_scheduled_jobs(logger):
+    scheduler = Scheduler(connection=Redis('redis'))
+    for j in scheduler.get_jobs():
+        scheduler.cancel(j)
+
+    scheduler.schedule(scheduled_time=datetime.utcnow(),
+                       func=jobs.refresh_github_branches,
+                       interval=120, repeat=3, ttl=15, result_ttl=20)
+
+
+def create_app(start_background_scheduled_jobs=False):
+
     app = flask.Flask(__name__)
     if os.environ.get('TOWERDASHBOARD_SETTINGS'):
         app.config.from_envvar('TOWERDASHBOARD_SETTINGS')
@@ -34,16 +56,30 @@ def create_app():
     if not app.config.get('TOWERQA_REPO'):
         raise RuntimeError('TOWERQA_REPO setting must be specified')
 
+    app.register_blueprint(root)
     app.register_blueprint(jenkins)
     db.init_app(app)
 
+    cache = Cache(config={
+        'CACHE_TYPE': 'redis',
+        'CACHE_REDIS_URL': 'redis://redis:6379/6',
+        'CACHE_KEY_PREFIX': 'towerdashboard',
+    })
+
+    cache.init_app(app)
+    app.cache = cache
+    app.github = github.GithubQuery(app.logger,
+                                    cache,
+                                    github_token=app.config.get('GITHUB_TOKEN'),
+                                    towerqa_repo=app.config.get('TOWERQA_REPO'))
+
+    # HACK: So that background tasks do not restart the scheduler
+    if start_background_scheduled_jobs:
+        start_background_scheduled_jobs(app.logger)
     return app
 
 
-app = create_app()
-
-
-@app.route('/', strict_slashes=False)
+@root.route('/', strict_slashes=False)
 def index():
     return flask.Response(
         json.dumps({'_status': 'OK', 'message': 'Tower Dasbhoard: OK'}),
@@ -52,7 +88,7 @@ def index():
     )
 
 
-@app.route('/init-db', strict_slashes=False)
+@root.route('/init-db', strict_slashes=False)
 def init_db():
     if db.init_db():
         msg = 'Database initialized'

@@ -18,63 +18,88 @@
 
 import requests
 
-from flask import current_app
-
 API_GITHUB = 'https://api.github.com'
 
 
-def github_request(url):
-    res = requests.get(
-        url,
-        headers={
-            'Authorization': 'token %s' % current_app.config.get('GITHUB_TOKEN'),
-            'Accept': 'application/vnd.github.inertia-preview+json'
-        }
-    )
-
-    return res
+def markcache(func, *args, **kwargs):
+    setattr(func, '__markcache', True)
+    return func
 
 
-def get_project_by_name(name):
-    url = '{}/orgs/ansible/projects'.format(API_GITHUB)
-    projects = github_request(url).json()
+class GithubQuery():
+    def __init__(self, logger, cache, github_token=None, towerqa_repo=None):
+        if not github_token:
+            raise ValueError("github_token required")
+        if not towerqa_repo:
+            raise ValueError("towerqa_repo required")
 
-    return [proj for proj in projects if proj['name'] == name][0]
+        self.logger = logger
+        self.cache = cache
+        self.github_token = github_token
+        self.towerqa_repo = towerqa_repo
 
+        # cache all functions
+        for attr, value in self.__class__.__dict__.items():
+            if callable(value) and hasattr(value, '__markcache'):
+                setattr(self, attr, cache.memoize(timeout=350)(getattr(self, attr)))
 
-def get_branches():
-    url = '{}/repos/{}/branches'.format(
-        API_GITHUB, current_app.config.get('TOWERQA_REPO')
-    )
-    response = github_request(url)
-    # example of github response.link
-    # {'next': {'url': 'https://api.github.com/repositories/12570480/branches?page=2',
-    # 'rel': 'next'},
-    # 'last': {'url': 'https://api.github.com/repositories/12570480/branches?page=2',
-    # 'rel': 'last'}}
-    branches = response.json()
-    while 'next' in response.links:
-            response = github_request(response.links['next']['url'])
-            branches.extend(response.json())
-    return [branch['name'] for branch in branches]
+    def get_cache_functions(self):
+        funcs = []
+        for attr, value in self.__class__.__dict__.items():
+            if callable(value) and hasattr(value, '__markcache'):
+                funcs.append(getattr(self, attr))
+        return funcs
 
+    def github_request(self, url):
+        res = requests.get(
+            url,
+            headers={
+                'Authorization': f'token {self.github_token}',
+                'Accept': 'application/vnd.github.inertia-preview+json'
+            }
+        )
+        if res.status_code != 200:
+            self.logger.warn(f"github request returned {res.status_code} for url {url} and reason {res.content}")
+            if res.status_code == 403:
+                raise RuntimeError("Rate limit exceeded")
 
-def get_test_plan_url(version):
-    url = '{}/repos/{}/contents/docs/test_plans/release_validation/testplan-{}.md'.format(
-        API_GITHUB, current_app.config.get('TOWERQA_REPO'), version
-    )
-    res = github_request(url)
+        return res
 
-    if res.status_code == 200:
-        return 'https://github.com/%s/blob/devel/docs/test_plans/release_validation/testplan-%s.md' % (current_app.config.get('TOWERQA_REPO'), version)
+    @markcache
+    def get_project_by_name(self, name):
+        url = f'{API_GITHUB}/orgs/ansible/projects'
+        projects = self.github_request(url).json()
 
-    return None
+        return [proj for proj in projects if proj['name'] == name][0]
 
+    @markcache
+    def get_branches(self):
+        url = f'{API_GITHUB}/repos/{self.towerqa_repo}/branches'
+        response = self.github_request(url)
+        # example of github response.link
+        # {'next': {'url': 'https://api.github.com/repositories/12570480/branches?page=2',
+        # 'rel': 'next'},
+        # 'last': {'url': 'https://api.github.com/repositories/12570480/branches?page=2',
+        # 'rel': 'last'}}
+        branches = response.json()
+        while 'next' in response.links:
+                response = self.github_request(response.links['next']['url'])
+                branches.extend(response.json())
+        return [branch['name'] for branch in branches]
 
-def get_issues_information(project, custom_query=None):
-    url = '{}/search/issues?q=is:open+is:issue+project:{}'.format(
-        API_GITHUB, project
-    )
-    if custom_query:
-        url += '+{}'.format(custom_query)
-    return github_request(url).json()
+    @markcache
+    def get_test_plan_url(self, version):
+        url = f'{API_GITHUB}/repos/{self.towerqa_repo}/contents/docs/test_plans/release_validation/testplan-{version}.md'
+        res = self.github_request(url)
+
+        if res.status_code == 200:
+            return f'https://github.com/{self.towerqa_repo}/blob/devel/docs/test_plans/release_validation/testplan-{version}.md'
+
+        return ''
+
+    @markcache
+    def get_issues_information(self, project, custom_query=None):
+        url = f'{API_GITHUB}/search/issues?q=is:open+is:issue+project:{project}'
+        if custom_query:
+            url += f'+{custom_query}'
+        return self.github_request(url).json()
