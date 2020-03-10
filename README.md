@@ -4,6 +4,8 @@
 
 A set of Tower QE dashboard that allows to have better insight of what is going on
 
+<img src="images/tower_dashboard_features.gif">
+
 ## Install Prerequisites
 
 ### Github Personnal Access Token
