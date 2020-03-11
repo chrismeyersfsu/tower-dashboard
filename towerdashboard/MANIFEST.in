@@ -1,5 +1,6 @@
 include README.md
 include LICENSE
+include wsgi.py
 include towerdashboard/schema.sql
 recursive-include towerdashboard/templates *
 recursive-include towerdashboard/static *

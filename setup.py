@@ -34,11 +34,12 @@ setuptools.setup(
     install_requires=[],
     url='https://github.com/Spredzy/tower-dashboard',
     license='Apache v2.0',
+    include_package_data=True,
     classifiers=[
         'Intended Audience :: Developers',
         'Intended Audience :: Information Technology',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     ]
 )

@@ -1,0 +1,13 @@
+FROM ansible/dashboard-prod:latest
+
+RUN rm -rf /tmp/requirements && mkdir /tmp/requirements/
+ADD requirements.txt \
+    test-requirements.txt \
+    /tmp/requirements/
+
+RUN cat /tmp/requirements/* > /tmp/requirements/requirements_all.txt
+
+RUN rm -rf /venv && virtualenv /venv
+RUN /venv/bin/pip3 install -r /tmp/requirements/requirements_all.txt
+
+CMD ["bash"]

@@ -12,115 +12,13 @@ The dashboard sources information from github repos (i.e. branches, issues, proj
 <img src="images/github_tower_dashboard_access_tokenn.gif">
 
 
-## Install
+## Production Install
 
-### Setting up Fedora to build the production RPMs
-
-In order to build the production RPM you need to install the following
-packages:
-
-```console
-$ sudo dnf install mock rpm-build rpmdevtools dnf-utils
 ```
-
-Then add your user to the mock group:
-
-```console
-$ sudo usermod -a -G mock "${USER}"
+make build-prod
+TOWERDASHBOARD_SETTINGS=/path_to_prod_settings.py make run-prod
+curl http://tower-qe-dashboard.ansible.eng.rdu2.redhat.com/init-db
 ```
-
-After that you can proceed to the initial production deployment if you
-deploying to production for the first time, or updating production deployment
-if you are updating an existing production environment.
-
-Note: this was tested on Fedora 30.
-
-### Initial Production Deployment
-
-To be able to setup a production environment, few steps are required.
-
-  1. Locally build the `tower-dashboard` rpm. (Mock needs to be previously installed)
-
-  ```bash
-  $ ./contrib/packaging/build_rpm.sh
-  ```
-
-  2. By default, the script above will place the resulting RPM on `/tmp`. That
-     said, scp the resulting RPM package to the production system, for example:
-
-  ```console
-  $ scp /tmp/tower-dashboard-*.noarch.rpm user@remotehost:
-  ```
-
-  3. On the production server
-
-  ```bash
-  #> yum -y install httpd mod_wsgi epel-release
-  #> yum -y install python-pip
-  #> yum -y install /path/to/tower-dashboard.rpm
-  #> pip install -U flask
-  ```
-
-  4. Create the proper httpd configuration (`/etc/httpd/conf.d/00_dashboard,conf`)
-
-  ```
-  <VirtualHost *:80>
-    CustomLog logs/tower_dashboard combined
-    ErrorLog logs/tower_dashboar_errors
-    DocumentRoot /usr/share/tower-dashboard
-
-    WSGIScriptAlias / /usr/share/tower-dashboard/wsgi.py
-    WSGIPassAuthorization On
-
-    <Directory /usr/lib/python2.7/site-packages/towerdashboard>
-       AllowOverride None
-       Require all granted
-    </Directory>
-
-    <Directory /usr/share/tower-dashboard>
-       AllowOverride None
-       Require all granted
-    </Directory>
-  </VirtualHost>
-  ```
-
- 5. Edit `/etc/tower-dashboard/settings.py`
-
- 6. `systemctl restart httpd`
-
-### Updating Production Deployment
-
-To be able to update a production environment, few steps are required:
-
-  1. Locally build the `tower-dashboard` rpm. See previous section for more information.
-
-  2. By default, the script above will place the resulting RPM on `/tmp`. That
-     said, scp the resulting RPM package to the production system, for example:
-
-  ```console
-  $ scp /tmp/tower-dashboard-*.noarch.rpm user@remotehost:
-  ```
-
-  3. On the production server install the updated RPM:
-
-  ```bash
-  #> yum -y install /path/to/updated-tower-dashboard.rpm
-  ```
-
-  4. Remove/rename old database. Be aware that the default path to the database
-     is on `/tmp/towerdashboard.sqlite` but since on production it is running
-     on httpd managed by systemd, then the database path may end up being
-     something like `/tmp/systemd-private-*-httpd.service-*/tmp/towerdashboard.sqlite`.
-
-  5. Restart httpd
-  ```bash
-  systemctl restart httpd && systemctl status -l httpd
-  ```
-
-  6. Re-create the database
-  ```bash
-  curl http://tower-qe-dashboard.ansible.eng.rdu2.redhat.com/init-db
-  ```
 
 ### Development
 

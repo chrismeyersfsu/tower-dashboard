@@ -1,0 +1,37 @@
+version: '2'
+services:
+  web:
+    extends:
+      file: docker-compose.prod.yml
+      service: web
+    ports:
+      - "5000:80"
+  dashboard:
+    extends:
+      file: docker-compose.prod.yml
+      service: dashboard
+    image: ansible/dashboard-dev:latest
+    environment:
+      TOWERDASHBOARD_SETTINGS: "/dashboard_devel/settings.py"
+    volumes:
+      - "../:/dashboard_devel"
+    command:
+      - /venv/bin/uwsgi
+      - -s
+      - /var/run/uwsgi/uwsgi.sock
+      - --module=towerdashboard.app
+      - --callable=app
+      - --vacuum
+      - --processes=5
+      - --harakiri=120
+      - --no-orphans
+      - --master
+      - --max-requests=1000
+      - --lazy-apps
+      - -b
+      - "32768"
+      - --chmod-socket=666
+      - --home=/venv/
+      - --chdir=/dashboard_devel/
+      - --py-autoreload=1
+

@@ -1,0 +1,35 @@
+---
+version: "2"
+services:
+  web:
+    image: nginx
+    container_name: web
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro"
+      - "/tmp/uwsgi:/tmp/uwsgi"
+  dashboard:
+    image: ansible/dashboard-prod:latest
+    container_name: dashboard
+    working_dir: "/dashboard_devel"
+    volumes:
+      - "../:/dashboard_devel"
+      - "/tmp/uwsgi:/var/run/uwsgi"
+    command:
+      - /venv/bin/uwsgi
+      - -s
+      - /var/run/uwsgi/uwsgi.sock
+      - --module=towerdashboard.app
+      - --callable=app
+      - --vacuum
+      - --processes=5
+      - --harakiri=120
+      - --no-orphans
+      - --master
+      - --max-requests=1000
+      - --lazy-apps
+      - -b
+      - "32768"
+      - --chmod-socket=666
