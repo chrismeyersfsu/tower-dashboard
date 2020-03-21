@@ -104,3 +104,6 @@ venv.bak/
 
 # Sensitive files
 settings.py
+
+# docker dev container runtime data (i.e. sqlite database, uwsgi socket file)
+tools/docker_data/**

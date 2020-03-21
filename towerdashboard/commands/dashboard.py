@@ -35,6 +35,8 @@ def wait_for_services():
     def get_services_health():
         try:
             res = requests.get('http://web/api/health')
+            if res.status_code != 200:
+                return False
             health = res.json()
             return health['database']['online'] and health['redis']['online']
         except requests.exceptions.ConnectionError as e:
@@ -49,6 +51,8 @@ def wait_for_redis():
     def get_health():
         try:
             res = requests.get('http://web/api/health')
+            if res.status_code != 200:
+                return False
             health = res.json()
             return health['redis']['online']
         except requests.exceptions.ConnectionError as e:

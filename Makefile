@@ -16,11 +16,17 @@ build-prod: build-sdist
 	docker build -t ${DOCKER_NAMESPACE}/dashboard-prod -f tools/Dockerfile.prod .
 
 run:
-	mkdir -p /tmp/dashboard_data/uwsgi
-	CURRENT_UUID=$(shell id -u) TOWERDASHBOARD_SETTINGS=../settings.py docker-compose -f tools/docker-compose.dev.yml up --no-recreate
+	mkdir -p ./tools/docker_data/uwsgi
+	CURRENT_UUID=$(shell id -u) \
+		TOWERDASHBOARD_SETTINGS=../settings.py \
+		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
+		docker-compose -f tools/docker-compose.dev.yml up --no-recreate
 
 run-prod:
-	TOWERDASHBOARD_SETTINGS=/etc/tower-dashboard/settings_docker.py docker-compose -f tools/docker-compose.prod.yml up
+	mkdir -p /dashboard_data/uwsgi
+	TOWERDASHBOARD_SETTINGS=/etc/tower-dashboard/settings_docker.py \
+		TOWERDASHBOARD_SHARED_DATA_DIR=/dashboard_data/ \
+		docker-compose -f tools/docker-compose.prod.yml up -d
 
 uwsgi-dev:
 	/venv/bin/uwsgi -s /var/run/uwsgi/uwsgi.sock \
