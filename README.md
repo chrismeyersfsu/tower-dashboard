@@ -28,11 +28,24 @@ The development container derives from the production container. Therefore, the 
 ```
 make build-prod
 make build
-cp settings.sample.py settings.py
+cp settings.local.sample.py settings.py
+```
+Update `settings.py` to include your github token and point to the right tower-qa repo. Additionally for local development make sure that `SQLITE_PATH = '/dashboard_data/dashboard.sqlite'`.
+
+
+Then, to run the local dashboard do:
+```
 make run
 ```
+Then tower-dashboard should be running on your local loop on port 5000 (`http://127.0.0.1:5000`)
 
-tower-dashboard should be running on your local loop on port 5000 (`http://127.0.0.1:5000`)
+If you instead want to run tests locally, run:
+```
+make run-test
+# drop into container
+source /venv/bin/activate
+pytest towerdashboard/tests
+```
 
 
 ## Sending data to the dashboard
