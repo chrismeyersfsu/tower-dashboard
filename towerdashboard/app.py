@@ -21,7 +21,10 @@ import os
 import logging
 from datetime import datetime
 
-from flask import current_app
+from flask import (
+    current_app,
+    json,
+)
 
 import redis
 from redis import Redis
@@ -78,11 +81,7 @@ def create_app():
 
 @root.route('/', strict_slashes=False)
 def index():
-    return flask.Response(
-        json.dumps({'_status': 'OK', 'message': 'Tower Dasbhoard: OK'}),
-        status=200,
-        content_type='application/json'
-    )
+    return json.jsonify({'_status': 'OK', 'message': 'Tower Dashboard: OK'})
 
 
 @root.route('/api/health', strict_slashes=False)
@@ -103,5 +102,5 @@ def health():
     except redis.exceptions.ConnectionError:
         status['redis']['online'] = False
 
-    return flask.Response(json.dumps(status))
+    return json.jsonify(status)
 

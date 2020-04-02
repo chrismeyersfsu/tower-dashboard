@@ -16,11 +16,13 @@
 # under the License.
 
 import flask
-import json
 import requests
 
 from datetime import date, datetime
-from flask import current_app
+from flask import (
+    current_app,
+    json,
+)
 from towerdashboard import db
 from towerdashboard import github
 from towerdashboard.jenkins import jenkins
@@ -68,11 +70,7 @@ def ansible_versions():
     versions = db_access.execute('SELECT * FROM ansible_versions').fetchall()
     versions = db.format_fetchall(versions)
 
-    return flask.Response(
-        json.dumps(versions),
-        status=200,
-        content_type='application/json'
-    )
+    return json.jsonify(versions)
 
 
 @jenkins.route('/os-versions', strict_slashes=False)
@@ -82,11 +80,7 @@ def os_versions():
     versions = db_access.execute('SELECT * FROM os_versions').fetchall()
     versions = db.format_fetchall(versions)
 
-    return flask.Response(
-        json.dumps(versions),
-        status=200,
-        content_type='application/json'
-    )
+    return json.jsonify(versions)
 
 
 @jenkins.route('/tower-versions', strict_slashes=False)

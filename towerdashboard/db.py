@@ -42,6 +42,7 @@ def is_db_inited(app):
     table_exists = db.execute(table_query).fetchone()[0]
     if table_exists:
         return True
+    return False
 
 
 def init_db(app):
