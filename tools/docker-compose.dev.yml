@@ -27,6 +27,9 @@ services:
     volumes:
       - "../:/dashboard_devel"
     command: make -C /dashboard_devel/ uwsgi-dev
+    links:
+      - web
+      - redis
   dashboard_worker:
     user: ${CURRENT_UUID}
     extends:

@@ -22,6 +22,13 @@ run:
 		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
 		docker-compose -f tools/docker-compose.dev.yml up --no-recreate
 
+run-test:
+	mkdir -p ./tools/docker_data/uwsgi
+	CURRENT_UUID=$(shell id -u) \
+		TOWERDASHBOARD_SETTINGS=../settings.py \
+		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
+		docker-compose -f tools/docker-compose.dev.yml run -w /dashboard_devel/ dashboard /bin/bash
+
 run-prod:
 	mkdir -p /dashboard_data/uwsgi
 	TOWERDASHBOARD_SETTINGS=/etc/tower-dashboard/settings_docker.py \
