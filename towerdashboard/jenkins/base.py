@@ -34,7 +34,7 @@ from towerdashboard.common import set_freshness
 
 @jenkins.route("/integration_tests", strict_slashes=False, methods=["POST", "GET"])
 def integration_tests():
-    current_app.logger.warn(
+    current_app.logger.warning(
         "Sending request to /jenkins/integration_tests is DEPRECATED and will be removed in a future release"
     )
     return common.integration_tests(flask)
@@ -42,7 +42,7 @@ def integration_tests():
 
 @jenkins.route("/sign_off_jobs", strict_slashes=False, methods=["POST", "GET"])
 def sign_off_jobs():
-    current_app.logger.warn(
+    current_app.logger.warning(
         "Sending request to /jenkins/sign_off_jobs is DEPRECATED and will be removed in a future release"
     )
     return common.sign_off_jobs(flask)
@@ -50,7 +50,7 @@ def sign_off_jobs():
 
 @jenkins.route("/os-versions", strict_slashes=False, methods=["GET"])
 def os_versions():
-    current_app.logger.warn(
+    current_app.logger.warning(
         "Sending request to /jenkins/os-versions is DEPRECATED and will be removed in a future release"
     )
     return common.os_versions(flask)
@@ -58,7 +58,7 @@ def os_versions():
 
 @jenkins.route("/ansible-versions", strict_slashes=False, methods=["GET"])
 def ansible_versions():
-    current_app.logger.warn(
+    current_app.logger.warning(
         "Sending request to /jenkins/ansible-versions is DEPRECATED and will be removed in a future release"
     )
     return common.ansible_versions(flask)
@@ -66,7 +66,7 @@ def ansible_versions():
 
 @jenkins.route("/tower-versions", strict_slashes=False, methods=["GET"])
 def tower_versions():
-    current_app.logger.warn(
+    current_app.logger.warning(
         "Sending request to /jenkins/tower-versions is DEPRECATED and will be removed in a future release"
     )
     return common.tower_versions(flask)
