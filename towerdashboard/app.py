@@ -32,6 +32,7 @@ from redis import Redis
 from flask_caching import Cache
 
 from towerdashboard.jenkins import jenkins
+from towerdashboard.api import api
 from towerdashboard.commands import dashboard as dashboard_commands
 from towerdashboard import (
     db,
@@ -58,6 +59,7 @@ def create_app():
 
     app.register_blueprint(root, cli_group=None)
     app.register_blueprint(jenkins)
+    app.register_blueprint(api)
     db.init_app(app)
 
     cache = Cache(config={

@@ -27,74 +27,49 @@ from towerdashboard import db
 from towerdashboard import github
 from towerdashboard.jenkins import jenkins
 from towerdashboard.data import base
+from towerdashboard import common
+from towerdashboard.common import set_freshness
+# Support old paths until we can update jenkins
 
 
-def form_tower_query(tower):
-    if 'devel' == tower:
-        return 'SELECT id FROM tower_versions WHERE code = "devel"'
-    else:
-        return 'SELECT id FROM tower_versions WHERE code = "%s"' % tower[0:3]
-
-def set_freshness(items, key, duration=2, discard_old=False):
-    for item in items:
-        if item.get(key):
-            if type(item[key]) is date:
-                delta = date.today() - item[key]
-            else:
-                delta = datetime.now() - datetime.strptime(
-                    item[key], '%Y-%m-%d %H:%M:%S'
-                )
-            item['freshness'] = delta.days
-    if discard_old:
-        items = [ x for x in items if x['freshness'] < duration ]
-
-    return items
-
-def check_payload(payload, required_keys):
-    missing_keys = []
-    for key in required_keys:
-        if key not in payload:
-            missing_keys.append(key)
-    if missing_keys:
-        return flask.Response(
-            json.dumps({'Error': 'Missing required keys/value pairs for {}'.format(missing_keys)}),
-            status=400,
-            content_type='application/json'
-        )
-
-
-@jenkins.route('/ansible-versions', strict_slashes=False)
-def ansible_versions():
-    db_access = db.get_db(current_app)
-
-    versions = db_access.execute('SELECT * FROM ansible_versions').fetchall()
-    versions = db.format_fetchall(versions)
-
-    return json.jsonify(versions)
-
-
-@jenkins.route('/os-versions', strict_slashes=False)
-def os_versions():
-    db_access = db.get_db(current_app)
-
-    versions = db_access.execute('SELECT * FROM os_versions').fetchall()
-    versions = db.format_fetchall(versions)
-
-    return json.jsonify(versions)
-
-
-@jenkins.route('/tower-versions', strict_slashes=False)
-def tower_versions():
-    db_access = db.get_db(current_app)
-
-    versions = db_access.execute('SELECT * FROM tower_versions').fetchall()
-    versions = db.format_fetchall(versions)
-
-    return flask.Response(
-        json.dumps(versions),
-        status=200,
-        content_type='application/json'
+@jenkins.route("/integration_tests", strict_slashes=False, methods=["POST", "GET"])
+def integration_tests():
+    current_app.logger.warn(
+        "Sending request to /jenkins/integration_tests is DEPRECATED and will be removed in a future release"
     )
+    return common.integration_tests(flask)
+
+
+@jenkins.route("/sign_off_jobs", strict_slashes=False, methods=["POST", "GET"])
+def sign_off_jobs():
+    current_app.logger.warn(
+        "Sending request to /jenkins/sign_off_jobs is DEPRECATED and will be removed in a future release"
+    )
+    return common.sign_off_jobs(flask)
+
+
+@jenkins.route("/os-versions", strict_slashes=False, methods=["GET"])
+def os_versions():
+    current_app.logger.warn(
+        "Sending request to /jenkins/os-versions is DEPRECATED and will be removed in a future release"
+    )
+    return common.os_versions(flask)
+
+
+@jenkins.route("/ansible-versions", strict_slashes=False, methods=["GET"])
+def ansible_versions():
+    current_app.logger.warn(
+        "Sending request to /jenkins/ansible-versions is DEPRECATED and will be removed in a future release"
+    )
+    return common.ansible_versions(flask)
+
+
+@jenkins.route("/tower-versions", strict_slashes=False, methods=["GET"])
+def tower_versions():
+    current_app.logger.warn(
+        "Sending request to /jenkins/tower-versions is DEPRECATED and will be removed in a future release"
+    )
+    return common.tower_versions(flask)
 
 
 @jenkins.route('/results', strict_slashes=False, methods=['POST'])
@@ -130,115 +105,6 @@ def results():
     )
 
 
-@jenkins.route('/sign_off_jobs', strict_slashes=False, methods=['POST', 'GET'])
-def sign_off_jobs():
-    if flask.request.method == 'GET':
-        tower_query = ''
-        for arg in flask.request.args:
-            if arg == 'tower':
-                tower_query = form_tower_query(flask.request.args.get(arg))
-            else:
-                return flask.Response(
-                    json.dumps({'Error': 'only able to filter on tower versions'}),
-                    status=400,
-                    content_type='application/json'
-                )
-        if tower_query:
-            job_query = 'SELECT * FROM sign_off_jobs WHERE tower_id = (%s)' % (tower_query)
-        else:
-            job_query = 'SELECT * FROM sign_off_jobs'
-
-        db_access = db.get_db(current_app)
-        res = db_access.execute(job_query).fetchall()
-        sign_off_jobs = db.format_fetchall(res)
-
-        return flask.Response(
-            json.dumps(sign_off_jobs),
-            status=200,
-            content_type='application/json'
-        )
-    else:
-        payload = flask.request.json
-        required_keys = ['tower', 'component', 'deploy', 'platform', 'tls', 'fips', 'bundle', 'ansible', 'url', 'status']
-
-        check_payload(payload, required_keys)
-        tower_query = form_tower_query(payload['tower'])
-        condition = 'tower_id = (%s) AND component = "%s" AND deploy = "%s" AND platform = "%s" AND' \
-                    ' tls = "%s" AND fips = "%s" AND bundle = "%s" AND ansible = "%s"' \
-                    % (tower_query, payload['component'], payload['deploy'], payload['platform'],
-                       payload['tls'], payload['fips'], payload['bundle'], payload['ansible'])
-        job_query = 'SELECT id FROM sign_off_jobs WHERE %s' % (condition)
-
-        db_access = db.get_db(current_app)
-        existing = db_access.execute(job_query).fetchall()
-        existing = db.format_fetchall(existing)
-        if existing:
-            _update_query = 'UPDATE sign_off_jobs SET status = "%s", url = "%s", created_at = "%s" WHERE id = (%s)'\
-                            % (payload['status'], payload['url'], datetime.now(), job_query)
-            db_access.execute(_update_query)
-            return_info_query = 'SELECT display_name, created_at FROM sign_off_jobs WHERE id = (%s)' % (job_query)
-            res = db_access.execute(return_info_query).fetchall()
-            updated_job = db.format_fetchall(res)
-        else:
-            job = "component_{}_platform_{}_deploy_{}_tls_{}_fips_{}_bundle_{}_ansible_{}".format(
-                payload["component"],
-                payload["platform"],
-                payload["deploy"],
-                payload["tls"],
-                payload["fips"],
-                payload["bundle"],
-                payload["ansible"],
-            )
-            tls_statement = "(TLS Enabled)" if payload["tls"] == "yes" else ""
-            fips_statement = "(FIPS Enabled)" if payload["fips"] == "yes" else ""
-            bundle_statement = (
-                "(Bundle installer)" if payload["bundle"] == "yes" else ""
-            )
-            display_name = "{} {} {} {} {} {} w/ ansible {}".format(
-                payload["platform"],
-                payload["deploy"],
-                payload["component"].replace("_", " "),
-                tls_statement,
-                fips_statement,
-                bundle_statement,
-                payload["ansible"],
-            )
-            display_name = display_name.title()
-            insert_query = (
-                "INSERT INTO sign_off_jobs (tower_id, job, display_name, component, platform, deploy, "
-                'tls, fips, bundle, ansible, status, url) VALUES ((%s), "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s");\n'
-                % (
-                    tower_query,
-                    job,
-                    display_name,
-                    payload["component"],
-                    payload["platform"],
-                    payload["deploy"],
-                    payload["tls"],
-                    payload["fips"],
-                    payload["bundle"],
-                    payload["ansible"],
-                    payload["status"],
-                    payload["url"]
-                )
-            )
-            db_access.execute(insert_query)
-        db_access.commit()
-
-        if existing:
-            return flask.Response(
-            json.dumps({'OK': 'Updated'}),
-            status=200,
-            content_type='application/json'
-            )
-        else:
-            return flask.Response(
-            json.dumps({'OK': 'Inserted'}),
-            status=200,
-            content_type='application/json'
-            )
-
-
 def serialize_issues(project):
     total_count = current_app.github.get_issues_information(project)['total_count']
     result = current_app.github.get_issues_information(project, 'label:state:needs_test')
@@ -266,71 +132,6 @@ def serialize_issues(project):
         )
     }
 
-@jenkins.route('/integration_tests', strict_slashes=False, methods=['POST', 'GET'])
-def integration_tests():
-    if flask.request.method == 'GET':
-        tower_query = ''
-        for arg in flask.request.args:
-            if arg == 'tower':
-                tower_query = form_tower_query(flask.request.args.get(arg))
-            else:
-                return flask.Response(
-                    json.dumps({'Error': 'only able to filter on tower versions'}),
-                    status=400,
-                    content_type='application/json'
-                )
-        if tower_query:
-            job_query = 'SELECT * FROM integration_tests WHERE tower_id = (%s)' % (tower_query)
-        else:
-            job_query = 'SELECT * FROM integration_tests'
-
-        db_access = db.get_db(current_app)
-        res = db_access.execute(job_query).fetchall()
-        integration_tests = db.format_fetchall(res)
-
-        return flask.Response(
-            json.dumps(integration_tests),
-            status=200,
-            content_type='application/json'
-        )
-    else:
-        payload = flask.request.json
-        required_keys = ['name', 'tower', 'deploy', 'platform', 'bundle', 'tls', 'fips', 'ansible', 'status', 'url']
-        check_payload(payload, required_keys)
-        tower_query = form_tower_query(payload['tower'])
-        tests = payload['name']
-        for test in tests:
-            condition = 'test_name = "%s" AND tower_id = (%s) AND deploy = "%s" AND platform = "%s" AND' \
-                        ' tls = "%s" AND fips = "%s" AND bundle = "%s" AND ansible = "%s"' % \
-                        (test, tower_query, payload['deploy'], payload['platform'], payload['tls'], payload['fips'],
-                         payload['bundle'], payload['ansible'])
-            job_query = 'SELECT * FROM integration_tests WHERE %s' % (condition)
-            db_access = db.get_db(current_app)
-            existing = db_access.execute(job_query).fetchall()
-            existing = db.format_fetchall(existing)
-            if existing:
-                failing_since_query = 'SELECT failing_since FROM integration_tests WHERE %s' % (condition)
-                failing_since = db_access.execute(failing_since_query).fetchall()
-                failing_since = db.format_fetchall(failing_since)
-                failing_since = failing_since[0]['failing_since']
-                delete_query = 'DELETE FROM integration_tests WHERE  %s' % (condition)
-                db_access.execute(delete_query)
-            else:
-                failing_since = date.today()
-            insert_query = 'INSERT INTO integration_tests (test_name, tower_id, deploy, ' \
-                           'platform, bundle, tls, fips, ansible, status, url, failing_since) ' \
-                           'VALUES ("%s", (%s), "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' % \
-                           (test, tower_query, payload['deploy'],
-                            payload['platform'], payload['bundle'], payload['tls'],
-                            payload['fips'], payload['ansible'], payload['status'], payload['url'], failing_since)
-            db_access.execute(insert_query)
-            db_access.commit()
-
-        return flask.Response(
-                json.dumps({'Inserted': 'ok'}),
-                status=201,
-                content_type='application/json'
-            )
 
 @jenkins.route('/integration_test_results', strict_slashes=False)
 def integration_test_results():
