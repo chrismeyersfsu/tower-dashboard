@@ -29,12 +29,12 @@ run-test:
 		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
 		docker-compose -f tools/docker-compose.dev.yml run -w /dashboard_devel/ dashboard /bin/bash
 
-pytest: lint
+test:
 	mkdir -p ./tools/docker_data/uwsgi
 	CURRENT_UUID=$(shell id -u) \
 		TOWERDASHBOARD_SETTINGS=../settings.test.py \
 		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
-		docker-compose -f tools/docker-compose.dev.yml run -w /dashboard_devel/ dashboard ./start_tests.sh
+		docker-compose -f tools/docker-compose.dev.yml run -w /dashboard_devel/ dashboard ./tools/start_tests.sh
 
 lint:
 	black --check --diff towerdashboard
