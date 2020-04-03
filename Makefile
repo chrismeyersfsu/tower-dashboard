@@ -29,6 +29,13 @@ run-test:
 		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
 		docker-compose -f tools/docker-compose.dev.yml run -w /dashboard_devel/ dashboard /bin/bash
 
+pytest:
+	mkdir -p ./tools/docker_data/uwsgi
+	CURRENT_UUID=$(shell id -u) \
+		TOWERDASHBOARD_SETTINGS=../settings.test.py \
+		TOWERDASHBOARD_SHARED_DATA_DIR=./docker_data \
+		docker-compose -f tools/docker-compose.dev.yml run -w /dashboard_devel/ dashboard ./start_tests.sh
+
 run-prod:
 	mkdir -p /dashboard_data/uwsgi
 	TOWERDASHBOARD_SETTINGS=/etc/tower-dashboard/settings_docker.py \
