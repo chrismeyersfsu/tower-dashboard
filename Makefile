@@ -5,7 +5,7 @@ build-sdist:
 	# require creating a directory with the same name.
 	docker build -t ${DOCKER_NAMESPACE}/dashboard-sdist -f tools/Dockerfile.sdist .
 	mv towerdashboard.egg-info towerdashboard.egg-info.bak || true
-	docker run -it -v $(PWD):/dashboard_devel --user=$(shell id -u) --workdir="/dashboard_devel" ${DOCKER_NAMESPACE}/dashboard-sdist python3 setup.py sdist
+	docker run -t -v $(PWD):/dashboard_devel --user=$(shell id -u) --workdir="/dashboard_devel" ${DOCKER_NAMESPACE}/dashboard-sdist python3 setup.py sdist
 	rm -rf towerdashboard.egg-info
 	mv towerdashboard.egg-info.bak towerdashboard.egg-info
 
