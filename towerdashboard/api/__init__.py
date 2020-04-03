@@ -62,3 +62,8 @@ def sign_off_jobs():
 @api.route("/integration_tests", strict_slashes=False, methods=["POST", "GET"])
 def integration_tests():
     return common.integration_tests(flask)
+
+
+@api.route('/pipeline_results', strict_slashes=False, methods=['POST'])
+def results():
+    return common.results(flask)

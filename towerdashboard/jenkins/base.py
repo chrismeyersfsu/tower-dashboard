@@ -74,36 +74,10 @@ def tower_versions():
 
 @jenkins.route('/results', strict_slashes=False, methods=['POST'])
 def results():
-    payload = flask.request.json
-
-    if 'devel' == payload['tower']:
-        tower_query = 'SELECT id FROM tower_versions WHERE code = "devel"'
-    else:
-        tower_query = 'SELECT id FROM tower_versions WHERE code = "%s"' % payload['tower'][0:3]
-    if 'ansible' in payload:
-        ansible_query = 'SELECT id FROM ansible_versions WHERE version = "%s"' % payload['ansible']
-    os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % payload['os']
-
-    db_access = db.get_db(current_app)
-
-    if 'ansible' in payload:
-        _del_query = 'DELETE FROM results WHERE tower_id = (%s) AND ansible_id = (%s) AND os_id = (%s)' % (tower_query, ansible_query, os_query)
-        _ins_query = 'INSERT INTO results (tower_id, ansible_id, os_id, status, url) VALUES ((%s), (%s), (%s), "%s", "%s")' % (tower_query, ansible_query, os_query, payload['status'], payload['url'])
-    else:
-        _del_query = 'DELETE FROM results WHERE tower_id = (%s) AND os_id = (%s)' % (tower_query, os_query)
-        _ins_query = 'INSERT INTO results (tower_id, os_id, status, url) VALUES ((%s), (%s), "%s", "%s")' % (tower_query, os_query, payload['status'], payload['url'])
-
-    db_access.execute(_del_query)
-    db_access.commit()
-    db_access.execute(_ins_query)
-    db_access.commit()
-
-    return flask.Response(
-      json.dumps({'Inserted': 'ok'}),
-      status=201,
-      content_type='application/json'
+    current_app.logger.warning(
+        "Sending request to /jenkins/results is DEPRECATED and will be removed in a future release"
     )
-
+    return common.results(flask)
 
 def serialize_issues(project):
     total_count = current_app.github.get_issues_information(project)['total_count']

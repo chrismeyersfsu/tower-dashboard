@@ -9,7 +9,7 @@ from towerdashboard import db
 @pytest.fixture
 def app():
     app = create_app()
-    db_fd, app.config['SQLITE_PATH'] = tempfile.mkstemp()
+    db_fd, app.config['SQLITE_PATH'] = tempfile.mkstemp(dir='/dashboard_data/')
 
     db.init_app(app)
     db.init_db(app)

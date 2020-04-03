@@ -27,23 +27,17 @@ def set_freshness(items, key, duration=2, discard_old=False):
     return items
 
 
-def check_payload(payload, required_keys):
+def check_payload_error(payload, required_keys):
     missing_keys = []
     for key in required_keys:
         if key not in payload:
             missing_keys.append(key)
     if missing_keys:
-        return flask.Response(
-            json.dumps(
-                {
-                    "Error": "Missing required keys/value pairs for {}".format(
-                        missing_keys
-                    )
-                }
-            ),
-            status=400,
-            content_type="application/json",
+        return json.dumps(
+            {"Error": "Missing required keys/value pairs for {}".format(missing_keys)}
         )
+    else:
+        return False
 
 
 def integration_tests(flask):
@@ -106,7 +100,9 @@ def integration_tests(flask):
             "status",
             "url",
         ]
-        check_payload(payload, required_keys)
+        error = check_payload_error(payload, required_keys)
+        if error:
+            return flask.Response(error, status=400, content_type="application/json")
         tower_query = form_tower_query(payload["tower"])
         tests = payload["name"]
         for test in tests:
@@ -206,7 +202,9 @@ def sign_off_jobs(flask):
             "status",
         ]
 
-        check_payload(payload, required_keys)
+        error = check_payload_error(payload, required_keys)
+        if error:
+            return flask.Response(error, status=400, content_type="application/json")
         tower_query = form_tower_query(payload["tower"])
         condition = (
             'tower_id = (%s) AND component = "%s" AND deploy = "%s" AND platform = "%s" AND'
@@ -329,4 +327,50 @@ def os_versions(flask):
 
     return flask.Response(
         json.dumps(versions), status=200, content_type="application/json"
+    )
+
+
+def results(flask):
+    payload = flask.request.json
+
+    if "devel" == payload["tower"]:
+        tower_query = 'SELECT id FROM tower_versions WHERE code = "devel"'
+    else:
+        tower_query = (
+            'SELECT id FROM tower_versions WHERE code = "%s"' % payload["tower"][0:3]
+        )
+    if "ansible" in payload:
+        ansible_query = (
+            'SELECT id FROM ansible_versions WHERE version = "%s"' % payload["ansible"]
+        )
+    os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % payload["os"]
+
+    db_access = db.get_db(flask.current_app)
+
+    if "ansible" in payload:
+        _del_query = (
+            "DELETE FROM results WHERE tower_id = (%s) AND ansible_id = (%s) AND os_id = (%s)"
+            % (tower_query, ansible_query, os_query)
+        )
+        _ins_query = (
+            'INSERT INTO results (tower_id, ansible_id, os_id, status, url) VALUES ((%s), (%s), (%s), "%s", "%s")'
+            % (tower_query, ansible_query, os_query, payload["status"], payload["url"])
+        )
+    else:
+        _del_query = "DELETE FROM results WHERE tower_id = (%s) AND os_id = (%s)" % (
+            tower_query,
+            os_query,
+        )
+        _ins_query = (
+            'INSERT INTO results (tower_id, os_id, status, url) VALUES ((%s), (%s), "%s", "%s")'
+            % (tower_query, os_query, payload["status"], payload["url"])
+        )
+
+    db_access.execute(_del_query)
+    db_access.commit()
+    db_access.execute(_ins_query)
+    db_access.commit()
+
+    return flask.Response(
+        json.dumps({"Inserted": "ok"}), status=201, content_type="application/json"
     )
