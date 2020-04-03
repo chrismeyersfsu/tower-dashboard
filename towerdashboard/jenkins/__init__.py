@@ -19,15 +19,16 @@ import flask
 import json
 
 
-jenkins = flask.Blueprint('jenkins', __name__, url_prefix='/jenkins')
+jenkins = flask.Blueprint("jenkins", __name__, url_prefix="/jenkins")
 
 
-@jenkins.route('/', strict_slashes=False)
+@jenkins.route("/", strict_slashes=False)
 def index():
     return flask.Response(
-        json.dumps({'_status': 'OK', 'message': 'Tower Dashboard: Jenkins.'}),
+        json.dumps({"_status": "OK", "message": "Tower Dashboard: Jenkins."}),
         status=200,
-        content_type='application/json'
+        content_type="application/json",
     )
+
 
 import towerdashboard.jenkins.base  # noqa

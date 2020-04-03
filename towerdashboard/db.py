@@ -29,16 +29,18 @@ def get_db(app):
 
 
 def close_db(app):
-    if getattr(app, 'db', None):
+    if getattr(app, "db", None):
         app.db.close()
 
 
 def is_db_inited(app):
     db = get_db(app)
-    '''
+    """
     If table exists in database, presume database to be inited
-    '''
-    table_query = 'SELECT count(*) FROM sqlite_master WHERE type="table" AND name="os_versions"'
+    """
+    table_query = (
+        'SELECT count(*) FROM sqlite_master WHERE type="table" AND name="os_versions"'
+    )
     table_exists = db.execute(table_query).fetchone()[0]
     if table_exists:
         return True
@@ -51,42 +53,62 @@ def init_db(app):
     if is_db_inited(app):
         return True
 
-    with app.open_resource('schema.sql') as f:
-        db.executescript(f.read().decode('utf8'))
+    with app.open_resource("schema.sql") as f:
+        db.executescript(f.read().decode("utf8"))
 
-    with tempfile.NamedTemporaryFile(mode='w+') as _tempfile:
+    with tempfile.NamedTemporaryFile(mode="w+") as _tempfile:
         for version in base.ANSIBLE_VERSIONS:
             _tempfile.write(
-                'INSERT INTO ansible_versions (version) VALUES ("%s");\n' % version['name']
+                'INSERT INTO ansible_versions (version) VALUES ("%s");\n'
+                % version["name"]
             )
 
         for version in base.OS_VERSIONS:
             _tempfile.write(
-                'INSERT INTO os_versions (version, description, family) VALUES ("%s", "%s", "%s");\n' % (version['name'], version['desc'], version['family'])
+                'INSERT INTO os_versions (version, description, family) VALUES ("%s", "%s", "%s");\n'
+                % (version["name"], version["desc"], version["family"])
             )
 
         for version in base.TOWER_VERSIONS:
             _tempfile.write(
-                'INSERT INTO tower_versions (version, code, general_availability, end_of_full_support, end_of_maintenance_support, end_of_life, spreadsheet_url) VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s");\n' % (version['name'], version['code'], version['general_availability'], version['end_of_full_support'], version['end_of_maintenance_support'], version['end_of_life'], version['spreadsheet_url'])
+                'INSERT INTO tower_versions (version, code, general_availability, end_of_full_support, end_of_maintenance_support, end_of_life, spreadsheet_url) VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s");\n'
+                % (
+                    version["name"],
+                    version["code"],
+                    version["general_availability"],
+                    version["end_of_full_support"],
+                    version["end_of_maintenance_support"],
+                    version["end_of_life"],
+                    version["spreadsheet_url"],
+                )
             )
 
         _tempfile.flush()
         with app.open_resource(_tempfile.name) as f:
-            db.executescript(f.read().decode('utf8'))
+            db.executescript(f.read().decode("utf8"))
 
-    with tempfile.NamedTemporaryFile(mode='w+') as _tempfile:
+    with tempfile.NamedTemporaryFile(mode="w+") as _tempfile:
         for config in base.TOWER_OS:
-            tower_query = 'SELECT id FROM tower_versions WHERE version = "%s"' % config['tower']
-            os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % config['os']
+            tower_query = (
+                'SELECT id FROM tower_versions WHERE version = "%s"' % config["tower"]
+            )
+            os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % config["os"]
             _tempfile.write(
-                'INSERT INTO tower_os (tower_id, os_id) VALUES ((%s), (%s));\n' % (tower_query, os_query)
+                "INSERT INTO tower_os (tower_id, os_id) VALUES ((%s), (%s));\n"
+                % (tower_query, os_query)
             )
 
         for config in base.TOWER_ANSIBLE:
-            tower_query = 'SELECT id FROM tower_versions WHERE version = "%s"' % config['tower']
-            ansible_query = 'SELECT id FROM ansible_versions WHERE version = "%s"' % config['ansible']
+            tower_query = (
+                'SELECT id FROM tower_versions WHERE version = "%s"' % config["tower"]
+            )
+            ansible_query = (
+                'SELECT id FROM ansible_versions WHERE version = "%s"'
+                % config["ansible"]
+            )
             _tempfile.write(
-                'INSERT INTO tower_ansible (tower_id, ansible_id) VALUES ((%s), (%s));\n' % (tower_query, ansible_query)
+                "INSERT INTO tower_ansible (tower_id, ansible_id) VALUES ((%s), (%s));\n"
+                % (tower_query, ansible_query)
             )
 
         # for config in base.RESULTS:
@@ -99,15 +121,15 @@ def init_db(app):
 
         _tempfile.flush()
         with app.open_resource(_tempfile.name) as f:
-            db.executescript(f.read().decode('utf8'))
+            db.executescript(f.read().decode("utf8"))
 
     return True
 
 
 def init_app(app):
     app.db = sqlite3.connect(
-        app.config.get('SQLITE_PATH', '/tmp/towerdashboard.sqlite'),
-        detect_types=sqlite3.PARSE_DECLTYPES
+        app.config.get("SQLITE_PATH", "/tmp/towerdashboard.sqlite"),
+        detect_types=sqlite3.PARSE_DECLTYPES,
     )
     app.db.row_factory = sqlite3.Row
     app.teardown_appcontext(close_db)

@@ -64,6 +64,6 @@ def integration_tests():
     return common.integration_tests(flask)
 
 
-@api.route('/pipeline_results', strict_slashes=False, methods=['POST'])
+@api.route("/pipeline_results", strict_slashes=False, methods=["POST"])
 def results():
     return common.results(flask)

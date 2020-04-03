@@ -29,6 +29,7 @@ from towerdashboard.jenkins import jenkins
 from towerdashboard.data import base
 from towerdashboard import common
 from towerdashboard.common import set_freshness
+
 # Support old paths until we can update jenkins
 
 
@@ -72,90 +73,103 @@ def tower_versions():
     return common.tower_versions(flask)
 
 
-@jenkins.route('/results', strict_slashes=False, methods=['POST'])
+@jenkins.route("/results", strict_slashes=False, methods=["POST"])
 def results():
     current_app.logger.warning(
         "Sending request to /jenkins/results is DEPRECATED and will be removed in a future release"
     )
     return common.results(flask)
 
+
 def serialize_issues(project):
-    total_count = current_app.github.get_issues_information(project)['total_count']
-    result = current_app.github.get_issues_information(project, 'label:state:needs_test')
+    total_count = current_app.github.get_issues_information(project)["total_count"]
+    result = current_app.github.get_issues_information(
+        project, "label:state:needs_test"
+    )
 
     needs_test_issues = []
-    for issue in result['items']:
-        needs_test_issues.append({
-            'title': issue['title'],
-            'url': issue['html_url'],
-            'updated_at': datetime
-                .strptime(issue['updated_at'], '%Y-%m-%dT%H:%M:%SZ')
-                .strftime('%b %-d %Y, %X'),
-            'assignee': ', '.join([i['login'] for i in issue['assignees']])
-        })
+    for issue in result["items"]:
+        needs_test_issues.append(
+            {
+                "title": issue["title"],
+                "url": issue["html_url"],
+                "updated_at": datetime.strptime(
+                    issue["updated_at"], "%Y-%m-%dT%H:%M:%SZ"
+                ).strftime("%b %-d %Y, %X"),
+                "assignee": ", ".join([i["login"] for i in issue["assignees"]]),
+            }
+        )
 
     return {
-        'count': total_count,
-        'html_url': 'https://github.com/issues?q=is:open+is:issue+project:{}'.format(
+        "count": total_count,
+        "html_url": "https://github.com/issues?q=is:open+is:issue+project:{}".format(
             project
         ),
-        'needs_test_count': len(needs_test_issues),
-        'needs_test_issues': needs_test_issues,
-        'needs_test_html_url': 'https://github.com/issues?q=is:open+is:issue+project:{}+label:state:needs_test'.format(
+        "needs_test_count": len(needs_test_issues),
+        "needs_test_issues": needs_test_issues,
+        "needs_test_html_url": "https://github.com/issues?q=is:open+is:issue+project:{}+label:state:needs_test".format(
             project
-        )
+        ),
     }
 
 
-@jenkins.route('/integration_test_results', strict_slashes=False)
+@jenkins.route("/integration_test_results", strict_slashes=False)
 def integration_test_results():
     db_access = db.get_db(current_app)
-    versions_query = 'SELECT * FROM tower_versions'
+    versions_query = "SELECT * FROM tower_versions"
     versions = db_access.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
     branches = current_app.github.get_branches()
 
     for version in versions:
-        if 'devel' not in version['version'].lower():
-            _version = version['version'].lower().replace(' ', '_')
+        if "devel" not in version["version"].lower():
+            _version = version["version"].lower().replace(" ", "_")
             _res = [branch for branch in branches if branch.startswith(_version)]
             _res.sort()
-            version['next_release'] = _res[-1]
-            version['next_release'] = version['next_release'].replace('release_', '')
+            version["next_release"] = _res[-1]
+            version["next_release"] = version["next_release"].replace("release_", "")
         else:
-            version['next_release'] = current_app.config.get('DEVEL_VERSION_NAME', 'undef')
+            version["next_release"] = current_app.config.get(
+                "DEVEL_VERSION_NAME", "undef"
+            )
 
-    failed_on = ''
+    failed_on = ""
     for arg in flask.request.args:
-        if arg == 'failed_on':
+        if arg == "failed_on":
             failed_on = flask.request.args.get(arg)
         else:
             return flask.Response(
-                json.dumps({'Error': 'only able to filter on "failed on" field'}),
+                json.dumps({"Error": 'only able to filter on "failed on" field'}),
                 status=400,
-                content_type='application/json'
+                content_type="application/json",
             )
-    fetch_query = 'SELECT * FROM integration_tests'
+    fetch_query = "SELECT * FROM integration_tests"
     integration_test_results = db_access.execute(fetch_query).fetchall()
     integration_test_results = db.format_fetchall(integration_test_results)
-    integration_test_results = set_freshness(integration_test_results, 'created_at', duration = 1)
-    integration_test_results = sorted(integration_test_results, key = lambda i: i['created_at'],reverse=True) 
+    integration_test_results = set_freshness(
+        integration_test_results, "created_at", duration=1
+    )
+    integration_test_results = sorted(
+        integration_test_results, key=lambda i: i["created_at"], reverse=True
+    )
 
-    if failed_on == 'today':
-        integration_test_results = [i for i in integration_test_results if i['freshness']<1]
+    if failed_on == "today":
+        integration_test_results = [
+            i for i in integration_test_results if i["freshness"] < 1
+        ]
 
     return flask.render_template(
-        'jenkins/integration_test_results.html',
+        "jenkins/integration_test_results.html",
         versions=versions,
-        integration_test_results=integration_test_results
+        integration_test_results=integration_test_results,
     )
 
 
-@jenkins.route('/releases', strict_slashes=False)
+@jenkins.route("/releases", strict_slashes=False)
 def releases():
     db_access = db.get_db(current_app)
 
-    versions_query = 'SELECT * FROM tower_versions'
+    versions_query = "SELECT * FROM tower_versions"
     versions = db_access.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
 
@@ -167,7 +181,7 @@ def releases():
     misc_results = db_access.execute(misc_query).fetchall()
     misc_results = db.format_fetchall(misc_results)
 
-    sign_off_jobs_query = 'SELECT * from sign_off_jobs;'
+    sign_off_jobs_query = "SELECT * from sign_off_jobs;"
     sign_off_jobs = db_access.execute(sign_off_jobs_query).fetchall()
     sign_off_jobs = db.format_fetchall(sign_off_jobs)
 
@@ -179,39 +193,49 @@ def releases():
     failed_jobs = db_access.execute(failed_jobs_query).fetchall()
     failed_jobs = db.format_fetchall(failed_jobs)
 
-    results = set_freshness(results, 'res_created_at')
-    sign_off_jobs = set_freshness(sign_off_jobs, 'created_at')
-    unstable_jobs = set_freshness(unstable_jobs, 'created_at', discard_old=True)
-    failed_jobs = set_freshness(failed_jobs, 'created_at', discard_old=True)
-    misc_results = set_freshness(misc_results, 'res_created_at')
+    results = set_freshness(results, "res_created_at")
+    sign_off_jobs = set_freshness(sign_off_jobs, "created_at")
+    unstable_jobs = set_freshness(unstable_jobs, "created_at", discard_old=True)
+    failed_jobs = set_freshness(failed_jobs, "created_at", discard_old=True)
+    misc_results = set_freshness(misc_results, "res_created_at")
 
     branches = current_app.github.get_branches()
 
     for version in versions:
-        if 'devel' not in version['version'].lower():
-            _version = version['version'].lower().replace(' ', '_')
+        if "devel" not in version["version"].lower():
+            _version = version["version"].lower().replace(" ", "_")
             _res = [branch for branch in branches if branch.startswith(_version)]
             _res.sort()
             milestone_name = _res[-1]
-            version['next_release'] = _res[-1]
-            version['next_release'] = version['next_release'].replace('release_', '')
+            version["next_release"] = _res[-1]
+            version["next_release"] = version["next_release"].replace("release_", "")
         else:
-            version['next_release'] = current_app.config.get('DEVEL_VERSION_NAME', 'undef')
-            milestone_name = 'release_{}'.format(version['next_release'])
+            version["next_release"] = current_app.config.get(
+                "DEVEL_VERSION_NAME", "undef"
+            )
+            milestone_name = "release_{}".format(version["next_release"])
 
-        version['next_release_test_plan'] = current_app.github.get_test_plan_url(version['next_release'])
-        project_number = current_app.github.get_project_by_name('Ansible Tower {}'.format(version['next_release']))['number']
-        version['project'] = 'https://github.com/orgs/ansible/projects/{}'.format(project_number)
-        version['issues'] = serialize_issues('ansible/{}'.format(project_number))
-        for issue in version['issues']['needs_test_issues']:
-            issue['qe_or_not'] = any(item in issue['assignee'].split(", ") for item in base.QE_assignee)
+        version["next_release_test_plan"] = current_app.github.get_test_plan_url(
+            version["next_release"]
+        )
+        project_number = current_app.github.get_project_by_name(
+            "Ansible Tower {}".format(version["next_release"])
+        )["number"]
+        version["project"] = "https://github.com/orgs/ansible/projects/{}".format(
+            project_number
+        )
+        version["issues"] = serialize_issues("ansible/{}".format(project_number))
+        for issue in version["issues"]["needs_test_issues"]:
+            issue["qe_or_not"] = any(
+                item in issue["assignee"].split(", ") for item in base.QE_assignee
+            )
 
     return flask.render_template(
-        'jenkins/releases.html',
+        "jenkins/releases.html",
         versions=versions,
         results=results,
         misc_results=misc_results,
         sign_off_jobs=sign_off_jobs,
         unstable_jobs=unstable_jobs,
-        failed_jobs=failed_jobs
+        failed_jobs=failed_jobs,
     )
