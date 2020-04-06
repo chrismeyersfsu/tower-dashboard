@@ -3,5 +3,5 @@ set -euxo pipefail
 
 cd /dashboard_devel
 source /venv/bin/activate
-echo "Running tests"
-pytest -v towerdashboard/tests
+echo "Running lint"
+black --check --diff towerdashboard

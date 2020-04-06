@@ -30,6 +30,10 @@ jobs:
       run: make build
 
     # Runs a set of commands using the runners shell
-    - name: Run lint and tests
+    - name: Run lint
+      run: make lint
+
+    # Runs a set of commands using the runners shell
+    - name: Run tests
       run: make test
 
