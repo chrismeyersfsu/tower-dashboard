@@ -25,8 +25,10 @@ ANSIBLE_VERSIONS = [
 ]
 
 OS_VERSIONS = [
+    {"name": "rhel-8.2-x86_64", "desc": "RHEL 8.2", "family": "RHEL"},
     {"name": "rhel-8.1-x86_64", "desc": "RHEL 8.1", "family": "RHEL"},
     {"name": "rhel-8.0-x86_64", "desc": "RHEL 8.0", "family": "RHEL"},
+    {"name": "rhel-7.8-x86_64", "desc": "RHEL 7.8", "family": "RHEL"},
     {"name": "rhel-7.7-x86_64", "desc": "RHEL 7.7", "family": "RHEL"},
     {"name": "rhel-7.6-x86_64", "desc": "RHEL 7.6", "family": "RHEL"},
     {"name": "rhel-7.5-x86_64", "desc": "RHEL 7.5", "family": "RHEL"},
@@ -94,8 +96,10 @@ TOWER_VERSIONS = [
 ]
 
 TOWER_OS = [
+    {"tower": "In Development", "os": "rhel-8.2-x86_64"},
     {"tower": "In Development", "os": "rhel-8.1-x86_64"},
     {"tower": "In Development", "os": "rhel-8.0-x86_64"},
+    {"tower": "In Development", "os": "rhel-7.8-x86_64"},
     {"tower": "In Development", "os": "rhel-7.7-x86_64"},
     {"tower": "In Development", "os": "rhel-7.6-x86_64"},
     {"tower": "In Development", "os": "rhel-7.5-x86_64"},

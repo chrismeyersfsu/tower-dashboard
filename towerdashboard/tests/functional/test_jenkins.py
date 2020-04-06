@@ -14,8 +14,10 @@ class TestJenkinsEndpoints:
         assert ("RHEL", "RHEL 7.5", "rhel-7.5-x86_64") in oses
         assert ("RHEL", "RHEL 7.6", "rhel-7.6-x86_64") in oses
         assert ("RHEL", "RHEL 7.7", "rhel-7.7-x86_64") in oses
+        assert ("RHEL", "RHEL 7.8", "rhel-7.8-x86_64") in oses
         assert ("RHEL", "RHEL 8.0", "rhel-8.0-x86_64") in oses
         assert ("RHEL", "RHEL 8.1", "rhel-8.1-x86_64") in oses
+        assert ("RHEL", "RHEL 8.2", "rhel-8.2-x86_64") in oses
         assert ("RHEL", "CentOS Latest", "centos-7.latest-x86_64") in oses
         assert ("misc", "OpenShift", "OpenShift") in oses
         assert ("misc", "Artifacts", "Artifacts") in oses
