@@ -5,3 +5,7 @@ rq
 rq-scheduler
 Flask-Caching
 redis
+Flask-SQLAlchemy
+python-jenkins
+junitparser
+marshmallow-sqlalchemy

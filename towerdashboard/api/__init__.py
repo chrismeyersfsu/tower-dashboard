@@ -21,7 +21,6 @@ import requests
 
 from datetime import date, datetime
 from flask import current_app
-from towerdashboard import db
 from towerdashboard import github
 from towerdashboard import common
 from towerdashboard.common import set_freshness

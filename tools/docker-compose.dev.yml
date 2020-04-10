@@ -13,7 +13,7 @@ services:
       service: dashboard_init
     image: ansible/dashboard-dev:latest
     environment:
-      PYTHONUNBUFFERED: 0
+      PYTHONUNBUFFERED: 1
     volumes:
       - "../:/dashboard_devel"
   dashboard:
@@ -23,7 +23,7 @@ services:
       service: dashboard
     image: ansible/dashboard-dev:latest
     environment:
-      PYTHONUNBUFFERED: 0
+      PYTHONUNBUFFERED: 1
     volumes:
       - "../:/dashboard_devel"
     command: make -C /dashboard_devel/ uwsgi-dev

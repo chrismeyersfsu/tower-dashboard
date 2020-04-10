@@ -1,14 +1,18 @@
 #!/bin/env python3
 
 import json
+import os
+import jenkins
+from requests import Request
+
 
 from towerdashboard import app as APP
-from towerdashboard import db
 
 
 def refresh_github_branches():
     print("Running refresh_github_branches()")
     app = APP.create_app()
+    from towerdashboard.app import db
     app.cache.delete_memoized(app.github.get_branches)
     app.cache.delete_memoized(app.github.get_test_plan_url)
     app.cache.delete_memoized(app.github.get_project_by_name)
@@ -16,8 +20,8 @@ def refresh_github_branches():
 
     branches = app.github.get_branches()
 
-    db_access = db.get_db(app)
-    versions_query = "SELECT * FROM tower_versions"
+    db_access = db
+    versions_query = 'SELECT * FROM tower_versions'
     versions = db_access.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
     for version in versions:

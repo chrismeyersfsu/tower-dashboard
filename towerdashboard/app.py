@@ -20,6 +20,7 @@ import json
 import os
 import logging
 from datetime import datetime
+import sqlite3
 
 from flask import (
     current_app,
@@ -31,20 +32,27 @@ from redis import Redis
 
 from flask_caching import Cache
 
-from towerdashboard.jenkins import jenkins
-from towerdashboard.api import api
-from towerdashboard.commands import dashboard as dashboard_commands
+from flask_sqlalchemy import SQLAlchemy
+
+from sqlalchemy.ext.declarative import declarative_base
+
+from towerdashboard.raw_db import is_db_inited
 from towerdashboard import (
-    db,
-    jobs,
     github,
 )
 
 
-root = flask.Blueprint("root", __name__)
+root = flask.Blueprint('root', __name__)
+db = SQLAlchemy()
 
 
 def create_app():
+    # Prevent circular import
+    from towerdashboard.api import api # noqa
+    from towerdashboard.commands import dashboard as dashboard_commands # noqa
+    from towerdashboard.jenkins import jenkins # noqa
+    from towerdashboard.experiment import experiment # noqa
+    from towerdashboard import raw_db
 
     app = flask.Flask(__name__)
     app.logger.setLevel(logging.INFO)
@@ -57,10 +65,16 @@ def create_app():
     if not app.config.get("TOWERQA_REPO"):
         raise RuntimeError("TOWERQA_REPO setting must be specified")
 
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////dashboard_data/towerdashboard.sqlite'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    db.init_app(app)
+    raw_db.init_app(app)
+
     app.register_blueprint(root, cli_group=None)
     app.register_blueprint(jenkins)
     app.register_blueprint(api)
-    db.init_app(app)
+    app.register_blueprint(experiment)
 
     cache = Cache(
         config={
@@ -80,12 +94,19 @@ def create_app():
     )
 
     # Command line commands
-    # FLASK_APP="app.py:create_app()" flask dashboard <command>
-    app.cli.add_command(dashboard_commands.cmds)
+    # FLASK_APP="app.py:app" flask dashboard <command>
+    with app.app_context():
+        app.cli.add_command(dashboard_commands.cmds)
     return app
 
 
-@root.route("/", strict_slashes=False)
+def is_db_inited(db):
+    engine = db.get_engine()
+    res = engine.dialect.has_table(engine.connect(), "test_run")
+    return res
+
+
+@root.route('/', strict_slashes=False)
 def index():
     return json.jsonify({"_status": "OK", "message": "Tower Dashboard: OK"})
 
@@ -93,7 +114,7 @@ def index():
 @root.route("/api/health", strict_slashes=False)
 def health():
     status = {
-        "database": {"online": True, "inited": db.is_db_inited(current_app),},
+        "database": {"online": True, "inited": is_db_inited(db),},
         "redis": {"online": False,},
     }
     try:

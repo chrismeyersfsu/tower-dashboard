@@ -1,7 +1,7 @@
 import json
 
 from datetime import date, datetime
-from towerdashboard import db
+from towerdashboard import raw_db
 
 
 def form_tower_query(tower):
@@ -42,7 +42,7 @@ def check_payload_error(payload, required_keys):
 
 def integration_tests(flask):
     if flask.request.method == "GET":
-        db_access = db.get_db(flask.current_app)
+        db_access = raw_db.get_db(flask.current_app)
         tower_query = ""
         failed_on = "2000-01-01"
         for arg in flask.request.args:
@@ -80,7 +80,7 @@ def integration_tests(flask):
             )
         print(fetch_query)
         test_results = db_access.execute(fetch_query).fetchall()
-        test_results = db.format_fetchall(test_results)
+        test_results = raw_db.format_fetchall(test_results)
         return flask.Response(
             json.dumps(test_results, default=str),
             status=200,
@@ -121,15 +121,15 @@ def integration_tests(flask):
                 )
             )
             job_query = "SELECT * FROM integration_tests WHERE %s" % (condition)
-            db_access = db.get_db(flask.current_app)
+            db_access = raw_db.get_db(flask.current_app)
             existing = db_access.execute(job_query).fetchall()
-            existing = db.format_fetchall(existing)
+            existing = raw_db.format_fetchall(existing)
             if existing:
                 failing_since_query = (
                     "SELECT failing_since FROM integration_tests WHERE %s" % (condition)
                 )
                 failing_since = db_access.execute(failing_since_query).fetchall()
-                failing_since = db.format_fetchall(failing_since)
+                failing_since = raw_db.format_fetchall(failing_since)
                 failing_since = failing_since[0]["failing_since"]
                 delete_query = "DELETE FROM integration_tests WHERE  %s" % (condition)
                 db_access.execute(delete_query)
@@ -180,9 +180,9 @@ def sign_off_jobs(flask):
         else:
             job_query = "SELECT * FROM sign_off_jobs"
 
-        db_access = db.get_db(flask.current_app)
+        db_access = raw_db.get_db(flask.current_app)
         res = db_access.execute(job_query).fetchall()
-        sign_off_jobs = db.format_fetchall(res)
+        sign_off_jobs = raw_db.format_fetchall(res)
 
         return flask.Response(
             json.dumps(sign_off_jobs), status=200, content_type="application/json"
@@ -222,9 +222,9 @@ def sign_off_jobs(flask):
         )
         job_query = "SELECT id FROM sign_off_jobs WHERE %s" % (condition)
 
-        db_access = db.get_db(flask.current_app)
+        db_access = raw_db.get_db(flask.current_app)
         existing = db_access.execute(job_query).fetchall()
-        existing = db.format_fetchall(existing)
+        existing = raw_db.format_fetchall(existing)
         if existing:
             _update_query = (
                 'UPDATE sign_off_jobs SET status = "%s", url = "%s", created_at = "%s" WHERE id = (%s)'
@@ -236,7 +236,7 @@ def sign_off_jobs(flask):
                 % (job_query)
             )
             res = db_access.execute(return_info_query).fetchall()
-            updated_job = db.format_fetchall(res)
+            updated_job = raw_db.format_fetchall(res)
         else:
             job = "component_{}_platform_{}_deploy_{}_tls_{}_fips_{}_bundle_{}_ansible_{}".format(
                 payload["component"],
@@ -298,10 +298,10 @@ def sign_off_jobs(flask):
 
 
 def tower_versions(flask):
-    db_access = db.get_db(flask.current_app)
+    db_access = raw_db.get_db(flask.current_app)
 
     versions = db_access.execute("SELECT * FROM tower_versions").fetchall()
-    versions = db.format_fetchall(versions)
+    versions = raw_db.format_fetchall(versions)
 
     return flask.Response(
         json.dumps(versions), status=200, content_type="application/json"
@@ -309,10 +309,10 @@ def tower_versions(flask):
 
 
 def ansible_versions(flask):
-    db_access = db.get_db(flask.current_app)
+    db_access = raw_db.get_db(flask.current_app)
 
     versions = db_access.execute("SELECT * FROM ansible_versions").fetchall()
-    versions = db.format_fetchall(versions)
+    versions = raw_db.format_fetchall(versions)
 
     return flask.Response(
         json.dumps(versions), status=200, content_type="application/json"
@@ -320,10 +320,10 @@ def ansible_versions(flask):
 
 
 def os_versions(flask):
-    db_access = db.get_db(flask.current_app)
+    db_access = raw_db.get_db(flask.current_app)
 
     versions = db_access.execute("SELECT * FROM os_versions").fetchall()
-    versions = db.format_fetchall(versions)
+    versions = raw_db.format_fetchall(versions)
 
     return flask.Response(
         json.dumps(versions), status=200, content_type="application/json"
@@ -345,7 +345,7 @@ def results(flask):
         )
     os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % payload["os"]
 
-    db_access = db.get_db(flask.current_app)
+    db_access = raw_db.get_db(flask.current_app)
 
     if "ansible" in payload:
         _del_query = (

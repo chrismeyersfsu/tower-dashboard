@@ -1,6 +1,11 @@
+import json
+import os
+import jenkins
 import time
-import requests
+import click
 from datetime import datetime
+from requests import Request
+import requests
 
 import redis
 from redis import Redis
@@ -10,7 +15,11 @@ from flask.cli import AppGroup
 
 from rq_scheduler import Scheduler
 
-from towerdashboard import db
+from towerdashboard import app as APP
+from towerdashboard.models import(
+    TestRun,
+)
+from towerdashboard.app import db
 
 
 cmds = AppGroup("dashboard")
@@ -62,27 +71,35 @@ def wait_for_redis():
     return wait_for(get_health)
 
 
+@cmds.command("reset_db")
+def reset_db():
+    db.drop_all()
+    init_db()
+
+
 @cmds.command("init_db")
 def init_db():
-    res = db.init_db(current_app)
+    db.create_all()
+    db.session.commit()
+    res = True
     if res:
         current_app.logger.info("Initialized Database")
     else:
         current_app.logger.info("Database already initialized")
 
+@cmds.command("init_query")
+def init_query():
+    request.post('http://web/experiment/query', data={})
 
 @cmds.command("create_schedules")
 def create_schedules():
-    from towerdashboard.jobs import refresh_github_branches
-
-    scheduler = Scheduler(connection=Redis("redis"))
+    scheduler = Scheduler(connection=Redis('redis'))
     for j in scheduler.get_jobs():
         scheduler.cancel(j)
 
-    scheduler.schedule(
-        scheduled_time=datetime.utcnow(),
-        func=refresh_github_branches,
-        interval=120,
-        repeat=None,
-        result_ttl=120,
-    )
+    '''
+    scheduler.schedule(scheduled_time=datetime.utcnow(),
+                       func=crawl_jenkins_jobs,
+                       interval=120, repeat=None, result_ttl=120)
+    '''
+

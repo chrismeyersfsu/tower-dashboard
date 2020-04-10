@@ -16,7 +16,6 @@
 # under the License.
 
 import flask
-import requests
 
 from datetime import date, datetime
 from operator import itemgetter
@@ -24,7 +23,7 @@ from flask import (
     current_app,
     json,
 )
-from towerdashboard import db
+from towerdashboard.app import db
 from towerdashboard import github
 from towerdashboard.jenkins import jenkins
 from towerdashboard.data import base
@@ -116,9 +115,8 @@ def serialize_issues(project):
 
 @jenkins.route("/integration_test_results", strict_slashes=False)
 def integration_test_results():
-    db_access = db.get_db(current_app)
-    versions_query = "SELECT * FROM tower_versions"
-    versions = db_access.execute(versions_query).fetchall()
+    versions_query = 'SELECT * FROM tower_versions'
+    versions = db.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
     branches = current_app.github.get_branches()
 
@@ -145,8 +143,8 @@ def integration_test_results():
                 status=400,
                 content_type="application/json",
             )
-    fetch_query = "SELECT * FROM integration_tests"
-    integration_test_results = db_access.execute(fetch_query).fetchall()
+    fetch_query = 'SELECT * FROM integration_tests'
+    integration_test_results = db.execute(fetch_query).fetchall()
     integration_test_results = db.format_fetchall(integration_test_results)
     integration_test_results = set_freshness(
         integration_test_results, "created_at", duration=1
@@ -169,30 +167,28 @@ def integration_test_results():
 
 @jenkins.route("/releases", strict_slashes=False)
 def releases():
-    db_access = db.get_db(current_app)
-
-    versions_query = "SELECT * FROM tower_versions"
-    versions = db_access.execute(versions_query).fetchall()
+    versions_query = 'SELECT * FROM tower_versions'
+    versions = db.execute(versions_query).fetchall()
     versions = db.format_fetchall(versions)
 
     results_query = 'SELECT tv.id, tv.version, av.version as "ansible", ov.version as "os", ov.description as "os_description", res.status, res.created_at as "res_created_at", res.url FROM tower_versions tv JOIN tower_os toos ON tv.id = toos.tower_id JOIN os_versions ov on toos.os_id = ov.id AND ov.version != "OpenShift" AND ov.version != "Artifacts" JOIN tower_ansible ta ON tv.id = ta.tower_id JOIN ansible_versions av ON av.id = ta.ansible_id LEFT JOIN results res ON (res.tower_id = tv.id AND res.os_id = ov.id AND res.ansible_id = av.id) ORDER BY tv.version, ov.id, av.id'
-    results = db_access.execute(results_query).fetchall()
+    results = db.execute(results_query).fetchall()
     results = db.format_fetchall(results)
 
     misc_query = 'SELECT tv.id, tv.version, ov.version as "os", ov.description as "os_description", res.status, res.created_at as "res_created_at", res.url FROM tower_versions tv JOIN tower_os toos ON tv.id = toos.tower_id JOIN os_versions ov on toos.os_id = ov.id AND (ov.version == "OpenShift" OR ov.version == "Artifacts") LEFT JOIN results res ON (res.tower_id = tv.id AND res.os_id = ov.id) ORDER BY tv.version, ov.id'
-    misc_results = db_access.execute(misc_query).fetchall()
+    misc_results = db.execute(misc_query).fetchall()
     misc_results = db.format_fetchall(misc_results)
 
-    sign_off_jobs_query = "SELECT * from sign_off_jobs;"
-    sign_off_jobs = db_access.execute(sign_off_jobs_query).fetchall()
+    sign_off_jobs_query = 'SELECT * from sign_off_jobs;'
+    sign_off_jobs = db.execute(sign_off_jobs_query).fetchall()
     sign_off_jobs = db.format_fetchall(sign_off_jobs)
 
     unstable_jobs_query = 'SELECT * from sign_off_jobs WHERE status = "UNSTABLE";'
-    unstable_jobs = db_access.execute(unstable_jobs_query).fetchall()
+    unstable_jobs = db.execute(unstable_jobs_query).fetchall()
     unstable_jobs = db.format_fetchall(unstable_jobs)
 
     failed_jobs_query = 'SELECT * from sign_off_jobs WHERE status = "FAILURE";'
-    failed_jobs = db_access.execute(failed_jobs_query).fetchall()
+    failed_jobs = db.execute(failed_jobs_query).fetchall()
     failed_jobs = db.format_fetchall(failed_jobs)
 
     results = set_freshness(results, "res_created_at")
