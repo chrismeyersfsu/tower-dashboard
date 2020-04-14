@@ -122,6 +122,7 @@ def integration_test_results():
     branches = current_app.github.get_branches()
 
     for version in versions:
+        print(version)
         if "devel" not in version["version"].lower():
             _version = version["version"].lower().replace(" ", "_")
             _res = [branch for branch in branches if branch.startswith(_version)]
@@ -218,17 +219,19 @@ def releases():
         version["next_release_test_plan"] = current_app.github.get_test_plan_url(
             version["next_release"]
         )
-        project_number = current_app.github.get_project_by_name(
+        project = current_app.github.get_project_by_name(
             "Ansible Tower {}".format(version["next_release"])
-        )["number"]
-        version["project"] = "https://github.com/orgs/ansible/projects/{}".format(
-            project_number
         )
-        version["issues"] = serialize_issues("ansible/{}".format(project_number))
-        for issue in version["issues"]["needs_test_issues"]:
-            issue["qe_or_not"] = any(
-                item in issue["assignee"].split(", ") for item in base.QE_assignee
+        project_number = project["number"]
+        if project_number:
+            version["project"] = "https://github.com/orgs/ansible/projects/{}".format(
+                project_number
             )
+            version["issues"] = serialize_issues("ansible/{}".format(project_number))
+            for issue in version["issues"]["needs_test_issues"]:
+                issue["qe_or_not"] = any(
+                    item in issue["assignee"].split(", ") for item in base.QE_assignee
+                )
 
     return flask.render_template(
         "jenkins/releases.html",

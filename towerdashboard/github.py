@@ -71,8 +71,11 @@ class GithubQuery:
     def get_project_by_name(self, name):
         url = f"{API_GITHUB}/orgs/ansible/projects"
         projects = self.github_request(url).json()
-
-        return [proj for proj in projects if proj["name"] == name][0]
+        projects = [proj for proj in projects if proj["name"] == name]
+        if projects:
+            return projects[0]
+        else:
+            return {'name': name, "number": None}
 
     @markcache
     def get_branches(self):
