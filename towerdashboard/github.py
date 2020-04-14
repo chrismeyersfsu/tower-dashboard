@@ -75,7 +75,7 @@ class GithubQuery:
         if projects:
             return projects[0]
         else:
-            return {'name': name, "number": None}
+            return {"name": name, "number": None}
 
     @markcache
     def get_branches(self):
