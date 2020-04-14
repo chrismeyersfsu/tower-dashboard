@@ -36,6 +36,7 @@ def refresh_github_branches():
         project_number = app.github.get_project_by_name(
             "Ansible Tower {}".format(version["next_release"])
         )["number"]
-        project = f"ansible/{project_number}"
-        app.github.get_issues_information(project)
-        app.github.get_issues_information(project, "label:state:needs_test")
+        if project_number:
+            project = f"ansible/{project_number}"
+            app.github.get_issues_information(project)
+            app.github.get_issues_information(project, "label:state:needs_test")
