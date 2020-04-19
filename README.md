@@ -10,7 +10,7 @@ A set of Tower QE dashboard that allows to have better insight of what is going 
 
 ### Github Personnal Access Token
 
-The dashboard sources information from github repos (i.e. branches, issues, projects, etc.). The dashboard accesses github using a Github Personal Access Token. The screen capture below shows you how to create a Github Personal Access Token. Save the token to `GITHUB_TOKEN` in your `settings.py` (defined later).
+The dashboard sources information from github repos (i.e. branches, issues, projects, etc.). The dashboard accesses github using a Github Personal Access Token ([direct link to create one](https://github.com/settings/tokens/new)). The screen capture below shows you how to create a Github Personal Access Token. Save the token to `GITHUB_TOKEN` in your `settings.py` (defined later).
 <img src="images/github_tower_dashboard_access_tokenn.gif">
 
 
