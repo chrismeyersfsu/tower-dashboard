@@ -111,14 +111,6 @@ def init_db(app):
                 % (tower_query, ansible_query)
             )
 
-        # for config in base.RESULTS:
-        #     tower_query = 'SELECT id FROM tower_versions WHERE version = "%s"' % config['release'].capitalize().replace('_', ' ')[0:-2]
-        #     os_query = 'SELECT id FROM os_versions WHERE version = "%s"' % config['os']
-        #     ansible_query = 'SELECT id FROM ansible_versions WHERE version = "%s"' % config['ansible']
-        #     _tempfile.write(
-        #             'INSERT INTO results (tower_id, ansible_id, os_id, status, url) VALUES ((%s), (%s), (%s), "%s", "%s");\n' % (tower_query, ansible_query, os_query, config['status'], 'https://www.google.com/')
-        #     )
-
         _tempfile.flush()
         with app.open_resource(_tempfile.name) as f:
             db.executescript(f.read().decode("utf8"))

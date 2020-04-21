@@ -93,15 +93,6 @@ TOWER_VERSIONS = [
         "end_of_life": "2020-07-09",
         "spreadsheet_url": None,
     },
-    {
-        "name": "Release 3.3",
-        "code": "3.3",
-        "general_availability": "2018-09-12",
-        "end_of_full_support": "2019-03-12",
-        "end_of_maintenance_support": "2019-09-12",
-        "end_of_life": "2020-03-12",
-        "spreadsheet_url": None,
-    },
 ]
 
 TOWER_OS = [
@@ -159,16 +150,6 @@ TOWER_OS = [
     {"tower": "Release 3.4", "os": "ubuntu-16.04-x86_64"},
     {"tower": "Release 3.4", "os": "OpenShift"},
     {"tower": "Release 3.4", "os": "Artifacts"},
-    {"tower": "Release 3.3", "os": "rhel-7.7-x86_64"},
-    {"tower": "Release 3.3", "os": "rhel-7.6-x86_64"},
-    {"tower": "Release 3.3", "os": "rhel-7.5-x86_64"},
-    {"tower": "Release 3.3", "os": "rhel-7.4-x86_64"},
-    {"tower": "Release 3.3", "os": "centos-7.latest-x86_64"},
-    {"tower": "Release 3.3", "os": "ol-7.6-x86_64"},
-    {"tower": "Release 3.3", "os": "ubuntu-16.04-x86_64"},
-    {"tower": "Release 3.3", "os": "ubuntu-14.04-x86_64"},
-    {"tower": "Release 3.3", "os": "OpenShift"},
-    {"tower": "Release 3.3", "os": "Artifacts"},
 ]
 
 TOWER_ANSIBLE = [
@@ -192,10 +173,6 @@ TOWER_ANSIBLE = [
     {"tower": "Release 3.4", "ansible": "stable-2.9"},
     {"tower": "Release 3.4", "ansible": "stable-2.8"},
     {"tower": "Release 3.4", "ansible": "stable-2.7"},
-    {"tower": "Release 3.3", "ansible": "devel"},
-    {"tower": "Release 3.3", "ansible": "stable-2.9"},
-    {"tower": "Release 3.3", "ansible": "stable-2.8"},
-    {"tower": "Release 3.3", "ansible": "stable-2.7"},
 ]
 
 QE_ASSIGNEE = {
