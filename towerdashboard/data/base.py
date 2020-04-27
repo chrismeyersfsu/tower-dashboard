@@ -183,16 +183,14 @@ RESULTS = [
     #     {'release': 'release_3.2.9', 'os': 'centos-7.latest-x86_64', 'ansible': 'stable-2.7', 'status': 'FAILURE', 'job_id': 24},
 ]
 
-QE_assignee = [
+QE_ASSIGNEE = {
     "appuk",
-    "squidboylan",
     "dsesami",
-    "kdelee",
     "elyezer",
     "fpjrh",
     "jneedle",
-    "unlikelyzero",
-    "nixocio",
+    "kdelee",
     "one-t",
-    "Spredzy",
-]
+    "squidboylan",
+    "unlikelyzero",
+}

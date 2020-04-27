@@ -19,6 +19,7 @@ import flask
 import requests
 
 from datetime import date, datetime
+from operator import itemgetter
 from flask import (
     current_app,
     json,
@@ -230,8 +231,10 @@ def releases():
             version["issues"] = serialize_issues("ansible/{}".format(project_number))
             for issue in version["issues"]["needs_test_issues"]:
                 issue["qe_or_not"] = any(
-                    item in issue["assignee"].split(", ") for item in base.QE_assignee
+                    item.strip() in base.QE_ASSIGNEE
+                    for item in issue["assignee"].split(",")
                 )
+            version["issues"]["needs_test_issues"].sort(key=itemgetter("qe_or_not"))
 
     return flask.render_template(
         "jenkins/releases.html",
