@@ -55,6 +55,15 @@ TOWER_VERSIONS = [
         "end_of_full_support": None,
         "end_of_maintenance_support": None,
         "end_of_life": None,
+        "spreadsheet_url": None,
+    },
+    {
+        "name": "Release 3.7",
+        "code": "3.7",
+        "general_availability": None,
+        "end_of_full_support": None,
+        "end_of_maintenance_support": None,
+        "end_of_life": None,
         "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1F6qSF6x_CVrfAQc8zDaScDTM7eESFujQvq9Cc7mMv0M/edit#gid=166211985",
     },
     {
@@ -108,6 +117,18 @@ TOWER_OS = [
     {"tower": "In Development", "os": "ol-7.6-x86_64"},
     {"tower": "In Development", "os": "OpenShift"},
     {"tower": "In Development", "os": "Artifacts"},
+    {"tower": "Release 3.7", "os": "rhel-8.2-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-8.1-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-8.0-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-7.8-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-7.7-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-7.6-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-7.5-x86_64"},
+    {"tower": "Release 3.7", "os": "rhel-7.4-x86_64"},
+    {"tower": "Release 3.7", "os": "centos-7.latest-x86_64"},
+    {"tower": "Release 3.7", "os": "ol-7.6-x86_64"},
+    {"tower": "Release 3.7", "os": "OpenShift"},
+    {"tower": "Release 3.7", "os": "Artifacts"},
     {"tower": "Release 3.6", "os": "rhel-8.1-x86_64"},
     {"tower": "Release 3.6", "os": "rhel-8.0-x86_64"},
     {"tower": "Release 3.6", "os": "rhel-7.7-x86_64"},
@@ -155,6 +176,10 @@ TOWER_ANSIBLE = [
     {"tower": "In Development", "ansible": "stable-2.9"},
     {"tower": "In Development", "ansible": "stable-2.8"},
     {"tower": "In Development", "ansible": "stable-2.7"},
+    {"tower": "Release 3.7", "ansible": "devel"},
+    {"tower": "Release 3.7", "ansible": "stable-2.9"},
+    {"tower": "Release 3.7", "ansible": "stable-2.8"},
+    {"tower": "Release 3.7", "ansible": "stable-2.7"},
     {"tower": "Release 3.6", "ansible": "devel"},
     {"tower": "Release 3.6", "ansible": "stable-2.9"},
     {"tower": "Release 3.6", "ansible": "stable-2.8"},
@@ -171,16 +196,6 @@ TOWER_ANSIBLE = [
     {"tower": "Release 3.3", "ansible": "stable-2.9"},
     {"tower": "Release 3.3", "ansible": "stable-2.8"},
     {"tower": "Release 3.3", "ansible": "stable-2.7"},
-]
-
-RESULTS = [
-    #     {'release': 'release_3.3.2', 'os': 'rhel-7.6-x86_64', 'ansible': 'stable-2.7', 'status': 'SUCCESS', 'job_id': 12},
-    #     {'release': 'release_3.3.2', 'os': 'rhel-7.5-x86_64', 'ansible': 'stable-2.6', 'status': 'SUCCESS', 'job_id': 13},
-    #     {'release': 'release_3.3.2', 'os': 'rhel-7.4-x86_64', 'ansible': 'stable-2.5', 'status': 'SUCCESS', 'job_id': 16},
-    #     {'release': 'release_3.2.9', 'os': 'rhel-7.6-x86_64', 'ansible': 'stable-2.7', 'status': 'SUCCESS', 'job_id': 19},
-    #     {'release': 'release_3.2.9', 'os': 'rhel-7.5-x86_64', 'ansible': 'stable-2.7', 'status': 'SUCCESS', 'job_id': 20},
-    #     {'release': 'release_3.2.9', 'os': 'rhel-7.4-x86_64', 'ansible': 'stable-2.7', 'status': 'SUCCESS', 'job_id': 24},
-    #     {'release': 'release_3.2.9', 'os': 'centos-7.latest-x86_64', 'ansible': 'stable-2.7', 'status': 'FAILURE', 'job_id': 24},
 ]
 
 QE_ASSIGNEE = {
